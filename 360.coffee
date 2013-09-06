@@ -1,7 +1,39 @@
 urls = ("testimg/#{i}.jpg" for i in [1..36])
-rootElem = document.getElementById "img360"
 
 ### Notes {{{1
+
+{{{2 Comments on System specification
+
+Idea for embedding: maybe just:
+<img src="http://cdn.onetwo360.com/product.jpg" ...>, and then automatically transforms these into 360-scripts, ie. no javascript coding needed for embedding... but plugin can be configured with JS. 
+
+{{{2 Done
+
+- image caching / preloader
+- rotate proof of concept
+
+{{{2 Tasks/roadmap
+
+- scale to elem-size
+- touch handler/interpretion
+- fullscreen
+- communication with API
+
+{{{2 Structure
+
+- view component
+- touch handler
+- controller touch-events to view-changes
+
+{{{2 Interaction
+
+- drag left/right: rotate
+  - rotation = x-drag scaled
+- tap/click: fullscreen, click on X or outside centered image to close
+- zoom (multitouch+multidrag: iOS + android 2.3.3+, zoom-button with lens on desktop)
+
+-----
+{{{2 Why img.src replacement
 
 When targeting mobile devices,  
 and possibly several 360º views on a page,
@@ -16,9 +48,7 @@ the `src` of an image tag, - also making it work
 in non-HTML5 browsers, such as IE8, 
 which we also need to support.
 
-----
-
-Wanted features
+{{{2 Wanted features
 
 - performant, and working on IE8+,mobile,...
   - component caching
@@ -32,6 +62,9 @@ Wanted features
 ### Util {{{1 ###
 nextTick = (fn) -> setTimeout fn, 0
 setStyle = (elem, obj) -> elem.style[key] = val for key, val of obj
+# Creating a temporary DOM object for each image is enough to get them loaded into cache. 
+cacheImgs = (urls) -> (new Image).src = url for url in urls
+onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10
 ### maximize {{{2 ###
 maximize = (elem) ->
   oldbody = document.createElement "div"
@@ -53,36 +86,47 @@ maximize = (elem) ->
     else
       parent.appendChild elem
 
-### Image caching {{{1 
+### 360º viewer {{{1 ###
+_360 = (img) ->
+  
+  w = img.width
+  h = img.height
+  console.log w, h
 
-Creating a temporary DOM object for each image
-is enough to get them loaded. 
+  urls = urls.map (url) -> url.replace /(\?.*)?$/, "?#{w}x#{h}"
+  cacheImgs urls
 
-####
-cacheImgs = (urls) -> (new Image).src = url for url in urls
-cacheImgs urls
+  ### Create image element {{{2 ###
+  img.src = urls[0]
+  img.onload = ->
+    setStyle img,
+      width: img.width + "px"
+      height: img.height + "px"
+  img.onmousemove = (e) ->
+  
+  fullscreen = new Image()
+  fullscreen.src = "fullscreenIcon"
+  setStyle fullscreen,
+    position: "absolute"
+    top: "0px"
+    left: "0px"
+  
+  ### Event / gesture handling {{{1 ###
+  scale = (x) -> ((x/w)*1.5*urls.length)|0
+  move = (x) -> img.src = urls[urls.length - 1 - (scale(x) % urls.length)]
+  img.ontouchstart = img.ontouchend = (e) -> e.preventDefault()
+  img.ontouchmove = (e) -> move e.touches[0].clientX
+  img.onmousemove = (e) -> move e.clientX
+  img.onclick = -> img.onclick = maximize img
+  
+### Embedding {{{1 ###
 
-### Create image element {{{1 ###
-img = new Image()
-img.src = urls[0]
-img.onload = ->
-  setStyle img,
-    width: img.width + "px"
-    height: img.height + "px"
-rootElem.appendChild(img)
-img.onmousemove = (e) ->
+#TODO: better onload-binding - should be addEventListener/attachEvent, or maybe timeout poll until body is loaded
 
-fullscreen = new Image()
-fullscreen.src = "fullscreenIcon"
-setStyle fullscreen,
-  position: "absolute"
-  top: "0px"
-  left: "0px"
-
-### Event / gesture handling {{{1 ###
-move = (x) -> img.src = urls[urls.length - 1 - ((20 + Math.round(x / 20)) % urls.length)]
-img.ontouchstart = img.ontouchend = (e) -> e.preventDefault()
-img.ontouchmove = (e) -> move e.touches[0].clientX
-img.onmousemove = (e) -> move e.clientX
-img.onclick = -> img.onclick = maximize img
-
+onComplete ->
+  re = /^https?:\/\/cdn.onetwo360.com\//
+  re = /^file:.*testimg\// # TODO: remove this line, temporarily here before deployment
+  console.log "HERE"
+  for elem in document.getElementsByTagName "img"
+    if re.exec elem.src
+      _360 elem
