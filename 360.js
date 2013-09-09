@@ -254,45 +254,25 @@
   })();
 
   /* Notes {{{2
+  {{{3 TODO
   
-  API-status
-  
-  
-  ----
-  
-  - nb cursoricon
-  - icon
-  
-  - ikoner: linse(desktop), fullscreen, ect. luk
-  - zoom-lens, 
-  - mobile: fullscren
-  - animate on load
-  - iOS - 5+, Android 4+
-  
-  ------
-  
-  {{{3 Comments on System specification
-  
-  Idea for embedding: maybe just:
-  <img src="http://cdn.onetwo360.com/product.jpg" ...>, and then automatically transforms these into 360-scripts, ie. no javascript coding needed for embedding... but plugin can be configured with JS. 
+  - cursor icon
+  - icons - zoom-lense(desktop), fullscreen, close(fullscreen)
+  - logo
+  - fullscreen(on both desktop and mobile)
+  - zoom(on desktop, mobile postponed)
+  - multitouch
+  - talk with api
+  - labels/markers
+  - browser-support: IE8+, iOS 5+ Android 4+
   
   {{{3 Done
   
   - image caching / preloader
-  - rotate proof of concept
-  
-  {{{3 Tasks/roadmap
-  
-  - scale to elem-size
-  - touch handler/interpretion
-  - fullscreen
-  - communication with API
-  
-  {{{3 Structure
-  
-  - view component
-  - touch handler
-  - controller touch-events to view-changes
+  - rotate - drag
+  - singletouch
+  - animate on load
+  - drag
   
   {{{3 Interaction
   
@@ -301,7 +281,6 @@
   - tap/click: fullscreen, click on X or outside centered image to close
   - zoom (multitouch+multidrag: iOS + android 2.3.3+, zoom-button with lens on desktop)
   
-  -----
   {{{3 Why img.src replacement
   
   When targeting mobile devices,  
@@ -316,15 +295,6 @@
   the `src` of an image tag, - also making it work
   in non-HTML5 browsers, such as IE8, 
   which we also need to support.
-  
-  {{{3 Wanted features
-  
-  - performant, and working on IE8+,mobile,...
-    - component caching
-  - rotate
-  - zoom
-  - labels
-  - touch
   */
 
 
