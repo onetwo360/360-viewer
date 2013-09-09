@@ -4,7 +4,7 @@
 
 
 (function() {
-  var asyncEach, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, onComplete, runOnce, setStyle, touchHandler, xhr, _360,
+  var asyncEach, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, onComplete, runOnce, setStyle, touchHandler, xhr,
     __slice = [].slice;
 
   floatPart = function(n) {
@@ -215,18 +215,36 @@
         e.preventDefault();
         return moveTouch(e);
       });
-      return elemAddEventListener(window, "mouseup", function(e) {
+      elemAddEventListener(window, "touchmove", function(e) {
+        if (!touch) {
+          return void 0;
+        }
+        e.preventDefault();
+        return moveTouch(e.touches[0]);
+      });
+      elemAddEventListener(window, "mouseup", function(e) {
         if (!touch) {
           return void 0;
         }
         e.preventDefault();
         return stopTouch(e);
       });
+      return elemAddEventListener(window, "touchend", function(e) {
+        if (!touch) {
+          return void 0;
+        }
+        e.preventDefault();
+        return stopTouch(e.touches[0]);
+      });
     });
     return touchHandler = function(handler) {
       elemAddEventListener(handler.elem, "mousedown", function(e) {
         e.preventDefault();
         return startTouch(e, handler);
+      });
+      elemAddEventListener(handler.elem, "touchstart", function(e) {
+        e.preventDefault();
+        return startTouch(e.touches[0], handler);
       });
       windowTouch();
       handler.start || (handler.start = identityFn);
@@ -390,7 +408,6 @@
             return void 0;
           },
           move: function(t) {
-            console.log(currentAngle);
             currentAngle -= 2 * Math.PI * t.ddx / width;
             return updateImage();
           },
@@ -401,68 +418,5 @@
       };
     };
   })();
-
-  /*
-  urls = ("testimg/#{i}.jpg" for i in [1..36])
-  
-  onComplete ->
-    re = /^https?:\/\/cdn.onetwo360.com\//
-    re = /^file:.*testimg\// # TODO: remove this line, temporarily here before deployment
-    for elem in document.getElementsByTagName "img"
-      if re.exec elem.src
-        _360 elem
-  */
-
-
-  _360 = function(img) {
-    var fullscreen, h, move, scale, urls, w;
-
-    w = img.width;
-    h = img.height;
-    console.log(w, h);
-    urls = urls.map(function(url) {
-      return url.replace(/(\?.*)?$/, "?" + w + "x" + h);
-    });
-    cacheImgs(urls);
-    /* Create image element {{{3
-    */
-
-    img.src = urls[0];
-    img.onload = function() {
-      return setStyle(img, {
-        width: img.width + "px",
-        height: img.height + "px"
-      });
-    };
-    img.onmousemove = function(e) {};
-    fullscreen = new Image();
-    fullscreen.src = "fullscreenIcon";
-    setStyle(fullscreen, {
-      position: "absolute",
-      top: "0px",
-      left: "0px"
-    });
-    /* Event / gesture handling {{{2
-    */
-
-    scale = function(x) {
-      return ((x / w) * 1.5 * urls.length) | 0;
-    };
-    move = function(x) {
-      return img.src = urls[urls.length - 1 - (scale(x) % urls.length)];
-    };
-    img.ontouchstart = img.ontouchend = function(e) {
-      return e.preventDefault();
-    };
-    img.ontouchmove = function(e) {
-      return move(e.touches[0].clientX);
-    };
-    img.onmousemove = function(e) {
-      return move(e.clientX);
-    };
-    return img.onclick = function() {
-      return img.onclick = maximize(img);
-    };
-  };
 
 }).call(this);

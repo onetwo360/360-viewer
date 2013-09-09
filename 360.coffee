@@ -95,17 +95,31 @@ do ->
     elemAddEventListener window, "mousemove", (e) ->
       return undefined if !touch
       e.preventDefault()
-      moveTouch(e)
+      moveTouch e
+
+    elemAddEventListener window, "touchmove", (e) ->
+      return undefined if !touch
+      e.preventDefault()
+      moveTouch e.touches[0]
 
     elemAddEventListener window, "mouseup", (e) ->
       return undefined if !touch
       e.preventDefault()
-      stopTouch(e)
+      stopTouch e
+
+    elemAddEventListener window, "touchend", (e) ->
+      return undefined if !touch
+      e.preventDefault()
+      stopTouch e.touches[0]
 
   touchHandler = (handler) ->
     elemAddEventListener handler.elem, "mousedown", (e) ->
       e.preventDefault()
       startTouch e, handler
+
+    elemAddEventListener handler.elem, "touchstart", (e) ->
+      e.preventDefault()
+      startTouch e.touches[0], handler
 
     windowTouch()
     handler.start ||= identityFn
@@ -251,54 +265,6 @@ do ->
         elem: img
         start: (t) -> undefined
         move: (t) ->
-          console.log currentAngle
           currentAngle -= 2 * Math.PI * t.ddx / width
           updateImage()
         end: (t) -> undefined
-
-
-# legacy test{{{3
-
-###
-urls = ("testimg/#{i}.jpg" for i in [1..36])
-
-onComplete ->
-  re = /^https?:\/\/cdn.onetwo360.com\//
-  re = /^file:.*testimg\// # TODO: remove this line, temporarily here before deployment
-  for elem in document.getElementsByTagName "img"
-    if re.exec elem.src
-      _360 elem
-      ###
-
-# 360º viewer {{{2 
-_360 = (img) ->
-  
-  w = img.width
-  h = img.height
-  console.log w, h
-
-  urls = urls.map (url) -> url.replace /(\?.*)?$/, "?#{w}x#{h}"
-  cacheImgs urls
-
-  ### Create image element {{{3 ###
-  img.src = urls[0]
-  img.onload = ->
-    setStyle img,
-      width: img.width + "px"
-      height: img.height + "px"
-  img.onmousemove = (e) ->
-  
-  fullscreen = new Image()
-  fullscreen.src = "fullscreenIcon"
-  setStyle fullscreen,
-    position: "absolute"
-    top: "0px"
-    left: "0px"
-  
-  ### Event / gesture handling {{{2 ###
-  scale = (x) -> ((x/w)*1.5*urls.length)|0
-  move = (x) -> img.src = urls[urls.length - 1 - (scale(x) % urls.length)]
-  img.ontouchstart = img.ontouchend = (e) -> e.preventDefault()
-  img.ontouchmove = (e) -> move e.touches[0].clientX
-  img.onmousemove = (e) -> move e.clientX
-  img.onclick = -> img.onclick = maximize img
