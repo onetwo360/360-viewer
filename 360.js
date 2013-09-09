@@ -4,54 +4,76 @@
 
 
 (function() {
-  var asyncEach, cacheImgs, i, identityFn, maximize, nextTick, onComplete, setStyle, urls, _360;
+  var asyncEach, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, onComplete, runOnce, setStyle, touchHandler, xhr, _360,
+    __slice = [].slice;
+
+  floatPart = function(n) {
+    return n - Math.floor(n);
+  };
+
+  extend = function() {
+    var key, source, sources, target, val, _i, _len;
+
+    target = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    for (_i = 0, _len = sources.length; _i < _len; _i++) {
+      source = sources[_i];
+      for (key in source) {
+        val = source[key];
+        target[key] = val;
+      }
+    }
+    return target;
+  };
 
   nextTick = function(fn) {
     return setTimeout(fn, 0);
-  };
-
-  setStyle = function(elem, obj) {
-    var key, val, _results;
-
-    _results = [];
-    for (key in obj) {
-      val = obj[key];
-      _results.push(elem.style[key] = val);
-    }
-    return _results;
   };
 
   identityFn = function(e) {
     return e;
   };
 
-  asyncEach = function(arr, fn, done) {
-    var count, elem, next, _i, _len, _results;
+  runOnce = function(fn) {
+    return function() {
+      var args;
 
-    count = arr.len;
-    next = function(err) {
-      if (--count) {
-        done(err);
-        return done = identityFn;
+      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      if (fn) {
+        fn.apply(null, args);
+        return fn = void 0;
       } else {
+        return void 0;
+      }
+    };
+  };
+
+  asyncEach = function(arr, fn, done) {
+    var elem, next, remaining, _i, _len;
+
+    done = runOnce(done);
+    remaining = arr.length;
+    next = function(err) {
+      if (err) {
+        done(err);
+      }
+      if (!--remaining) {
         return done();
       }
     };
-    _results = [];
     for (_i = 0, _len = arr.length; _i < _len; _i++) {
       elem = arr[_i];
-      _results.push(fn(elem, next));
+      fn(elem, next);
     }
-    return _results;
+    return void 0;
   };
 
-  cacheImgs = function(urls) {
-    var url, _i, _len, _results;
+  xhr = setStyle = function(elem, obj) {
+    var key, val, _results;
 
     _results = [];
-    for (_i = 0, _len = urls.length; _i < _len; _i++) {
-      url = urls[_i];
-      _results.push((new Image).src = url);
+    for (key in obj) {
+      val = obj[key];
+      _results.push(elem.style[key] = val);
     }
     return _results;
   };
@@ -68,9 +90,28 @@
     })();
   };
 
-  /* maximize {{{3
-  */
+  elemAddEventListener = function(elem, type, fn) {
+    if (elem.addEventListener) {
+      return elem.addEventListener(type, fn, false);
+    } else {
+      return typeof elem.attachEvent === "function" ? elem.attachEvent("on" + type, fn) : void 0;
+    }
+  };
 
+  cacheImgs = function(urls, callback) {
+    var loadImg;
+
+    loadImg = function(url, done) {
+      var img;
+
+      img = new Image();
+      img.src = url;
+      return img.onload = function() {
+        return done();
+      };
+    };
+    return asyncEach(urls, loadImg, callback);
+  };
 
   maximize = function(elem) {
     var nextSibling, node, oldbody, parent, _i, _len, _ref;
@@ -125,8 +166,81 @@
     };
   };
 
+  touchHandler = void 0;
+
+  (function() {
+    var moveTouch, multitouch, startTouch, stopTouch, touch, touches, updateTouch, windowTouch;
+
+    touches = [];
+    multitouch = false;
+    touch = false;
+    startTouch = function(e, handler) {
+      touch = {
+        handler: handler,
+        x0: e.clientX,
+        y0: e.clientY,
+        x: e.clientX,
+        y: e.clientY
+      };
+      updateTouch(touch, e);
+      return touch.ctx = handler.start(touch);
+    };
+    updateTouch = function(touch, e) {
+      var x, y;
+
+      x = e.clientX;
+      y = e.clientY;
+      touch.event = e;
+      touch.ddx = x - touch.x || 0;
+      touch.ddy = y - touch.y || 0;
+      touch.dx = x - touch.x0;
+      touch.dy = y - touch.y0;
+      touch.x = x;
+      return touch.y = y;
+    };
+    moveTouch = function(e) {
+      updateTouch(touch, e);
+      return touch.ctx = touch.handler.move(touch);
+    };
+    stopTouch = function(e) {
+      updateTouch(touch, e);
+      touch.handler.endtouch;
+      return touch = void 0;
+    };
+    windowTouch = runOnce(function() {
+      elemAddEventListener(window, "mousemove", function(e) {
+        if (!touch) {
+          return void 0;
+        }
+        e.preventDefault();
+        return moveTouch(e);
+      });
+      return elemAddEventListener(window, "mouseup", function(e) {
+        if (!touch) {
+          return void 0;
+        }
+        e.preventDefault();
+        return stopTouch(e);
+      });
+    });
+    return touchHandler = function(handler) {
+      elemAddEventListener(handler.elem, "mousedown", function(e) {
+        e.preventDefault();
+        return startTouch(e, handler);
+      });
+      windowTouch();
+      handler.start || (handler.start = identityFn);
+      handler.move || (handler.move = identityFn);
+      return handler.end || (handler.end = identityFn);
+    };
+  })();
+
   /* Notes {{{2
   
+  API-status
+  
+  
+  ----
   
   - nb cursoricon
   - icon
@@ -196,37 +310,112 @@
   */
 
 
-  urls = (function() {
-    var _i, _results;
+  (function() {
+    var default360Config;
 
-    _results = [];
-    for (i = _i = 1; _i <= 36; i = ++_i) {
-      _results.push("testimg/" + i + ".jpg");
-    }
-    return _results;
+    default360Config = {
+      autorotate: true,
+      imageURLs: void 0
+    };
+    return window.onetwo360 = function(cfg) {
+      var autorotate, cache360Images, currentAngle, elem, get360Config, img, init360Controls, init360Elem, updateImage, width;
+
+      currentAngle = 0;
+      width = void 0;
+      elem = document.getElementById(cfg.elem_id);
+      img = new Image();
+      elem.appendChild(img);
+      nextTick(function() {
+        return get360Config();
+      });
+      get360Config = function() {
+        return nextTick(function() {
+          var i, serverConfig;
+
+          serverConfig = {
+            imageURLs: (function() {
+              var _i, _results;
+
+              _results = [];
+              for (i = _i = 1; _i <= 36; i = ++_i) {
+                _results.push("testimg/" + i + ".jpg");
+              }
+              return _results;
+            })()
+          };
+          cfg = extend({}, default360Config, serverConfig, cfg);
+          return init360Elem();
+        });
+      };
+      init360Elem = function() {
+        return cache360Images(function() {
+          setStyle(img, {
+            width: cfg.request_width + "px",
+            height: cfg.request_height + "px"
+          });
+          width = cfg.request_width;
+          if (cfg.autorotate) {
+            return autorotate(init360Controls);
+          } else {
+            return init360Controls();
+          }
+        });
+      };
+      cache360Images = function(done) {
+        return cacheImgs(cfg.imageURLs, done);
+      };
+      autorotate = function(done) {
+        var i, showNext;
+
+        i = 0;
+        showNext = function() {
+          if (i < cfg.imageURLs.length) {
+            img.src = cfg.imageURLs[i++];
+            return img.onload = function() {
+              return setTimeout(showNext, 10);
+            };
+          } else {
+            return done();
+          }
+        };
+        return showNext();
+      };
+      updateImage = function() {
+        return img.src = cfg.imageURLs[floatPart(currentAngle / Math.PI / 2) * cfg.imageURLs.length | 0];
+      };
+      return init360Controls = function() {
+        return touchHandler({
+          elem: img,
+          start: function(t) {
+            return void 0;
+          },
+          move: function(t) {
+            console.log(currentAngle);
+            currentAngle -= 2 * Math.PI * t.ddx / width;
+            return updateImage();
+          },
+          end: function(t) {
+            return void 0;
+          }
+        });
+      };
+    };
   })();
 
-  onComplete(function() {
-    var elem, re, _i, _len, _ref, _results;
+  /*
+  urls = ("testimg/#{i}.jpg" for i in [1..36])
+  
+  onComplete ->
+    re = /^https?:\/\/cdn.onetwo360.com\//
+    re = /^file:.*testimg\// # TODO: remove this line, temporarily here before deployment
+    for elem in document.getElementsByTagName "img"
+      if re.exec elem.src
+        _360 elem
+  */
 
-    re = /^https?:\/\/cdn.onetwo360.com\//;
-    re = /^file:.*testimg\//;
-    console.log("HERE");
-    _ref = document.getElementsByTagName("img");
-    _results = [];
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      elem = _ref[_i];
-      if (re.exec(elem.src)) {
-        _results.push(_360(elem));
-      } else {
-        _results.push(void 0);
-      }
-    }
-    return _results;
-  });
 
   _360 = function(img) {
-    var fullscreen, h, move, scale, w;
+    var fullscreen, h, move, scale, urls, w;
 
     w = img.width;
     h = img.height;
