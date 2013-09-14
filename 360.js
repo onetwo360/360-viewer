@@ -204,7 +204,7 @@
     };
     stopTouch = function(e) {
       updateTouch(touch, e);
-      touch.handler.endtouch;
+      touch.handler.endtouch(touch);
       return touch = void 0;
     };
     windowTouch = runOnce(function() {
@@ -252,51 +252,6 @@
       return handler.end || (handler.end = identityFn);
     };
   })();
-
-  /* Notes {{{2
-  {{{3 TODO
-  
-  - cursor icon
-  - icons - zoom-lense(desktop), fullscreen, close(fullscreen)
-  - logo
-  - fullscreen(on both desktop and mobile)
-  - zoom(on desktop, mobile postponed)
-  - multitouch
-  - talk with api
-  - labels/markers
-  - browser-support: IE8+, iOS 5+ Android 4+
-  
-  {{{3 Done
-  
-  - image caching / preloader
-  - rotate - drag
-  - singletouch
-  - animate on load
-  - drag
-  
-  {{{3 Interaction
-  
-  - drag left/right: rotate
-    - rotation = x-drag scaled
-  - tap/click: fullscreen, click on X or outside centered image to close
-  - zoom (multitouch+multidrag: iOS + android 2.3.3+, zoom-button with lens on desktop)
-  
-  {{{3 Why img.src replacement
-  
-  When targeting mobile devices,  
-  and possibly several 360º views on a page,
-  memory is more likely to be bottleneck than CPU.
-  
-  We therefore just preload the compressed images
-  into the browsers component cache, 
-  and decompress them at render time.
-  
-  The actual rendering is then just replacing
-  the `src` of an image tag, - also making it work
-  in non-HTML5 browsers, such as IE8, 
-  which we also need to support.
-  */
-
 
   (function() {
     var default360Config;

@@ -88,7 +88,7 @@ do ->
 
   stopTouch = (e) ->
     updateTouch touch, e
-    touch.handler.endtouch
+    touch.handler.endtouch touch
     touch = undefined
 
   windowTouch = runOnce ->
