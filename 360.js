@@ -369,13 +369,11 @@
       doZoom = function(t) {
         var imgPos, zoomHeight, zoomLeftPos, zoomLens, zoomLensImg, zoomTopPos, zoomWidth;
         zoomLens = document.getElementById("zoomLens360");
-        console.log(zoomLens);
         zoomLensImg = zoomLens.children[0];
         zoomLensImg.src = img.src;
         zoomWidth = zoomLensImg.width;
         zoomHeight = zoomLensImg.height;
         imgPos = img.getBoundingClientRect();
-        console.log(imgPos.top, t.y);
         zoomLeftPos = t.x + document.body.scrollLeft - zoomSize * .9;
         zoomTopPos = t.y + document.body.scrollTop - zoomSize * .9;
         setStyle(zoomLens, {
