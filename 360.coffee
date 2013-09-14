@@ -87,8 +87,7 @@ do ->
     touch.ctx = touch.handler.move touch
 
   stopTouch = (e) ->
-    updateTouch touch, e
-    touch.handler.endtouch touch
+    touch.handler.end touch
     touch = undefined
 
   windowTouch = runOnce ->
@@ -160,6 +159,7 @@ do ->
         setStyle img,
           width: cfg.request_width + "px"
           height: cfg.request_height + "px"
+          cursor: "url(res/cursor_rotate.cur),move"
         width = cfg.request_width
 
         if cfg.autorotate

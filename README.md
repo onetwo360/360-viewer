@@ -1,5 +1,6 @@
-# 360º Notes
+# ![.](https://ssl.solsort.com/_solsort.png) 360º Notes
 ## TODO
+### Initial version
 
 - cursor icon
 - icons - zoom-lense(desktop), fullscreen, close(fullscreen)
@@ -10,6 +11,10 @@
 - talk with api
 - labels/markers
 - browser-support: IE8+, iOS 5+ Android 4+
+
+### Future
+
+- animate during load, instead of animate on load
 
 ## Done
 
