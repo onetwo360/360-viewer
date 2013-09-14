@@ -2,21 +2,21 @@
 ## TODO
 ### Initial version
 
-- icons - zoom-lense(desktop), fullscreen, close(fullscreen)
 - logo
 - fullscreen(on both desktop and mobile)
-- zoom(on desktop, mobile postponed)
-- multitouch
 - talk with api
 - labels/markers
-- browser-support: IE8+, iOS 5+ Android 4+
+- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
 
 ### Future
 
+- icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 - animate during load, instead of animate on load
 
 ## Done
 
+- zoom(on desktop+mobile)
+- browser-support: IE8+, iOS 5+ Android 4+
 - cursor icon
 - image caching / preloader
 - rotate - drag
