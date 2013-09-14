@@ -88,7 +88,7 @@ do ->
     updateTouch touch, e
     touch.ctx = handler.start(touch)
     holdHandler = ->
-      if touch && touch.maxDist2 < tapDist2
+      if touch && !touch.holding && touch.maxDist2 < tapDist2
         touch.holding = true
         touch.handler.hold touch
     setTimeout holdHandler, tapLength
@@ -144,16 +144,15 @@ do ->
       overflow: "hidden"
       width: zoomSize + "px"
       height: zoomSize + "px"
-      padding: "-500px"
-      border: "1px solid black"
+      border: "0px solid black"
       cursor: "crosshair"
+      backgroundColor: "rgba(100,100,100,0.8)"
       borderRadius: (zoomSize/2) + "px"
       borderBottomRightRadius: (zoomSize/5) + "px"
+      boxShadow: "0px 0px 40px 0px rgba(255,255,255,.7) inset, 4px 4px 9px 0px rgba(0,0,0,0.5)"
       display: "none"
     zoomLens.id = "zoomLens360"
     document.body.appendChild zoomLens
-    zoomLensImg = document.createElement "img"
-    zoomLens.appendChild zoomLensImg
 
   # Add 360 elem to page {{{3
   window.onetwo360 = (cfg) ->
@@ -223,22 +222,23 @@ do ->
     # Zoom handling {{{3
     doZoom = (t) ->
       zoomLens = document.getElementById "zoomLens360"
-      zoomLensImg = zoomLens.children[0]
-      zoomLensImg.src = img.src # TODO: this should be large image instead
-      zoomWidth = zoomLensImg.width
-      zoomHeight = zoomLensImg.height
+      zoomWidth = 810
+      zoomHeight = 789
+      largeUrl = img.src
       imgPos = img.getBoundingClientRect()
       zoomLeftPos = t.x + document.body.scrollLeft - zoomSize * .9
       zoomTopPos = t.y + document.body.scrollTop - zoomSize * .9
+      bgLeft = zoomSize*.9-((t.x-imgPos.left) * zoomWidth / (img.width))
+      bgTop = zoomSize*.9-((t.y-imgPos.top) * zoomHeight / (img.height))
       setStyle zoomLens,
+        display: "block"
+        position: "absolute"
         left: zoomLeftPos + "px"
         top: zoomTopPos + "px"
-        display: "block"
-      setStyle zoomLensImg,
-        position: "absolute"
-        left: zoomSize*.9-((t.x-imgPos.left) * zoomWidth / (img.width)) + "px"
-        top: zoomSize*.9-((t.y-imgPos.top) * zoomHeight / (img.height)) + "px"
-      img.style.cursor = "crosshair"
+        backgroundImage: "url(#{largeUrl})"
+        backgroundPosition: "#{bgLeft}px #{bgTop}px"
+        backgroundRepeat: "no-repeat"
+      #img.style.cursor = "crosshair" # cannot reset cursor style, as it will mess up zoom lens on iOS
 
     endZoom = (t) ->
       img.style.cursor = "url(res/cursor_rotate.cur),move"

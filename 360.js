@@ -192,7 +192,7 @@
       updateTouch(touch, e);
       touch.ctx = handler.start(touch);
       holdHandler = function() {
-        if (touch && touch.maxDist2 < tapDist2) {
+        if (touch && !touch.holding && touch.maxDist2 < tapDist2) {
           touch.holding = true;
           return touch.handler.hold(touch);
         }
@@ -256,24 +256,23 @@
       imageURLs: void 0
     };
     onComplete(function() {
-      var zoomLens, zoomLensImg;
+      var zoomLens;
       zoomLens = document.createElement("div");
       setStyle(zoomLens, {
         position: "absolute",
         overflow: "hidden",
         width: zoomSize + "px",
         height: zoomSize + "px",
-        padding: "-500px",
-        border: "1px solid black",
+        border: "0px solid black",
         cursor: "crosshair",
+        backgroundColor: "rgba(100,100,100,0.8)",
         borderRadius: (zoomSize / 2) + "px",
         borderBottomRightRadius: (zoomSize / 5) + "px",
+        boxShadow: "0px 0px 40px 0px rgba(255,255,255,.7) inset, 4px 4px 9px 0px rgba(0,0,0,0.5)",
         display: "none"
       });
       zoomLens.id = "zoomLens360";
-      document.body.appendChild(zoomLens);
-      zoomLensImg = document.createElement("img");
-      return zoomLens.appendChild(zoomLensImg);
+      return document.body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
       var autorotate, cache360Images, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, recache, updateImage, width;
@@ -367,26 +366,25 @@
         };
       };
       doZoom = function(t) {
-        var imgPos, zoomHeight, zoomLeftPos, zoomLens, zoomLensImg, zoomTopPos, zoomWidth;
+        var bgLeft, bgTop, imgPos, largeUrl, zoomHeight, zoomLeftPos, zoomLens, zoomTopPos, zoomWidth;
         zoomLens = document.getElementById("zoomLens360");
-        zoomLensImg = zoomLens.children[0];
-        zoomLensImg.src = img.src;
-        zoomWidth = zoomLensImg.width;
-        zoomHeight = zoomLensImg.height;
+        zoomWidth = 810;
+        zoomHeight = 789;
+        largeUrl = img.src;
         imgPos = img.getBoundingClientRect();
         zoomLeftPos = t.x + document.body.scrollLeft - zoomSize * .9;
         zoomTopPos = t.y + document.body.scrollTop - zoomSize * .9;
-        setStyle(zoomLens, {
+        bgLeft = zoomSize * .9 - ((t.x - imgPos.left) * zoomWidth / img.width);
+        bgTop = zoomSize * .9 - ((t.y - imgPos.top) * zoomHeight / img.height);
+        return setStyle(zoomLens, {
+          display: "block",
+          position: "absolute",
           left: zoomLeftPos + "px",
           top: zoomTopPos + "px",
-          display: "block"
+          backgroundImage: "url(" + largeUrl + ")",
+          backgroundPosition: "" + bgLeft + "px " + bgTop + "px",
+          backgroundRepeat: "no-repeat"
         });
-        setStyle(zoomLensImg, {
-          position: "absolute",
-          left: zoomSize * .9 - ((t.x - imgPos.left) * zoomWidth / img.width) + "px",
-          top: zoomSize * .9 - ((t.y - imgPos.top) * zoomHeight / img.height) + "px"
-        });
-        return img.style.cursor = "crosshair";
       };
       return endZoom = function(t) {
         img.style.cursor = "url(res/cursor_rotate.cur),move";
