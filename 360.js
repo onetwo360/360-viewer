@@ -193,34 +193,21 @@
       return touch = void 0;
     };
     windowTouch = runOnce(function() {
-      elemAddEventListener(window, "mousemove", function(e) {
-        if (!touch) {
-          return void 0;
-        }
-        e.preventDefault();
-        return moveTouch(e);
-      });
-      elemAddEventListener(window, "touchmove", function(e) {
-        if (!touch) {
-          return void 0;
-        }
-        e.preventDefault();
-        return moveTouch(e.touches[0]);
-      });
-      elemAddEventListener(window, "mouseup", function(e) {
-        if (!touch) {
-          return void 0;
-        }
-        e.preventDefault();
-        return stopTouch(e);
-      });
-      return elemAddEventListener(window, "touchend", function(e) {
-        if (!touch) {
-          return void 0;
-        }
-        e.preventDefault();
-        return stopTouch(e.touches[0]);
-      });
+      var condCall;
+      condCall = function(fn) {
+        return function(e) {
+          var _ref;
+          if (!touch) {
+            return void 0;
+          }
+          e.preventDefault();
+          return fn(((_ref = e.touches) != null ? _ref[0] : void 0) || e);
+        };
+      };
+      elemAddEventListener(window, "mousemove", condCall(moveTouch));
+      elemAddEventListener(window, "touchmove", condCall(moveTouch));
+      elemAddEventListener(window, "mouseup", condCall(stopTouch));
+      return elemAddEventListener(window, "touchend", condCall(stopTouch));
     });
     return touchHandler = function(handler) {
       elemAddEventListener(handler.elem, "mousedown", function(e) {
@@ -234,7 +221,8 @@
       windowTouch();
       handler.start || (handler.start = identityFn);
       handler.move || (handler.move = identityFn);
-      return handler.end || (handler.end = identityFn);
+      handler.end || (handler.end = identityFn);
+      return handler;
     };
   })();
 

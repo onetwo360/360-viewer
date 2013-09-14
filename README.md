@@ -1,8 +1,7 @@
-# ![.](https://ssl.solsort.com/_solsort.png) 360º Notes
+# ![.](https://ssl.solsort.com/_solsort.png) 360º viewer component
 ## TODO
 ### Initial version
 
-- cursor icon
 - icons - zoom-lense(desktop), fullscreen, close(fullscreen)
 - logo
 - fullscreen(on both desktop and mobile)
@@ -18,6 +17,7 @@
 
 ## Done
 
+- cursor icon
 - image caching / preloader
 - rotate - drag
 - singletouch

@@ -91,39 +91,25 @@ do ->
     touch = undefined
 
   windowTouch = runOnce ->
-    elemAddEventListener window, "mousemove", (e) ->
+    condCall = (fn) -> (e) ->
       return undefined if !touch
       e.preventDefault()
-      moveTouch e
-
-    elemAddEventListener window, "touchmove", (e) ->
-      return undefined if !touch
-      e.preventDefault()
-      moveTouch e.touches[0]
-
-    elemAddEventListener window, "mouseup", (e) ->
-      return undefined if !touch
-      e.preventDefault()
-      stopTouch e
-
-    elemAddEventListener window, "touchend", (e) ->
-      return undefined if !touch
-      e.preventDefault()
-      stopTouch e.touches[0]
+      fn(e.touches?[0] || e)
+    elemAddEventListener window, "mousemove", condCall moveTouch
+    elemAddEventListener window, "touchmove", condCall moveTouch
+    elemAddEventListener window, "mouseup", condCall stopTouch
+    elemAddEventListener window, "touchend", condCall stopTouch
 
   touchHandler = (handler) ->
-    elemAddEventListener handler.elem, "mousedown", (e) ->
-      e.preventDefault()
-      startTouch e, handler
-
-    elemAddEventListener handler.elem, "touchstart", (e) ->
-      e.preventDefault()
-      startTouch e.touches[0], handler
+    elemAddEventListener handler.elem, "mousedown", (e) -> e.preventDefault(); startTouch e, handler
+    elemAddEventListener handler.elem, "touchstart", (e) -> e.preventDefault(); startTouch e.touches[0], handler
 
     windowTouch()
     handler.start ||= identityFn
     handler.move ||= identityFn
     handler.end ||= identityFn
+
+    handler
 
 # 360º specific (proprietary) {{{1
 # Controller {{{2 
