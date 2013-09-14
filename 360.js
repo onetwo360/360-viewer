@@ -3,7 +3,7 @@
 
 
 (function() {
-  var asyncEach, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, onComplete, runOnce, setStyle, touchHandler, xhr,
+  var asyncEach, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, touchHandler,
     __slice = [].slice;
 
   floatPart = function(n) {
@@ -29,6 +29,10 @@
 
   identityFn = function(e) {
     return e;
+  };
+
+  nop = function() {
+    return void 0;
   };
 
   runOnce = function(fn) {
@@ -63,7 +67,7 @@
     return void 0;
   };
 
-  xhr = setStyle = function(elem, obj) {
+  setStyle = function(elem, obj) {
     var key, val, _results;
     _results = [];
     for (key in obj) {
@@ -157,21 +161,10 @@
   touchHandler = void 0;
 
   (function() {
-    var moveTouch, multitouch, startTouch, stopTouch, touch, touches, updateTouch, windowTouch;
-    touches = [];
-    multitouch = false;
+    var moveTouch, startTouch, stopTouch, tapDist2, tapLength, touch, updateTouch, windowTouch;
     touch = false;
-    startTouch = function(e, handler) {
-      touch = {
-        handler: handler,
-        x0: e.clientX,
-        y0: e.clientY,
-        x: e.clientX,
-        y: e.clientY
-      };
-      updateTouch(touch, e);
-      return touch.ctx = handler.start(touch);
-    };
+    tapLength = 300;
+    tapDist2 = 10 * 10;
     updateTouch = function(touch, e) {
       var x, y;
       x = e.clientX;
@@ -181,15 +174,40 @@
       touch.ddy = y - touch.y || 0;
       touch.dx = x - touch.x0;
       touch.dy = y - touch.y0;
+      touch.maxDist2 = touch.dx * touch.dx + touch.dy * touch.dy;
+      touch.time = Date.now() - touch.startTime;
       touch.x = x;
       return touch.y = y;
     };
+    startTouch = function(e, handler) {
+      var holdHandler;
+      touch = {
+        handler: handler,
+        x0: e.clientX,
+        y0: e.clientY,
+        x: e.clientX,
+        y: e.clientY,
+        startTime: Date.now()
+      };
+      updateTouch(touch, e);
+      touch.ctx = handler.start(touch);
+      holdHandler = function() {
+        if (touch && touch.maxDist2 < tapDist2) {
+          touch.holding = true;
+          return touch.handler.hold(touch);
+        }
+      };
+      return setTimeout(holdHandler, tapLength);
+    };
     moveTouch = function(e) {
       updateTouch(touch, e);
-      return touch.ctx = touch.handler.move(touch);
+      return touch.ctx = touch.handler.move(touch || touch.ctx);
     };
     stopTouch = function(e) {
       touch.handler.end(touch);
+      if (touch.maxDist2 < tapDist2 && touch.time < tapLength) {
+        touch.handler.click(touch);
+      }
       return touch = void 0;
     };
     windowTouch = runOnce(function() {
@@ -219,25 +237,56 @@
         return startTouch(e.touches[0], handler);
       });
       windowTouch();
-      handler.start || (handler.start = identityFn);
-      handler.move || (handler.move = identityFn);
-      handler.end || (handler.end = identityFn);
+      handler.start || (handler.start = nop);
+      handler.move || (handler.move = nop);
+      handler.end || (handler.end = nop);
+      handler.drag || (handler.drag = nop);
+      handler.click || (handler.click = nop);
+      handler.hold || (handler.hold = nop);
       return handler;
     };
   })();
 
   (function() {
-    var default360Config;
+    var default360Config, eventHandler, zoomSize;
+    zoomSize = 200;
+    eventHandler = void 0;
     default360Config = {
       autorotate: true,
       imageURLs: void 0
     };
+    onComplete(function() {
+      var zoomLens, zoomLensImg;
+      zoomLens = document.createElement("div");
+      setStyle(zoomLens, {
+        position: "absolute",
+        overflow: "hidden",
+        width: zoomSize + "px",
+        height: zoomSize + "px",
+        padding: "-500px",
+        border: "1px solid black",
+        cursor: "crosshair",
+        borderRadius: (zoomSize / 2) + "px",
+        borderBottomRightRadius: (zoomSize / 5) + "px",
+        display: "none"
+      });
+      zoomLens.id = "zoomLens360";
+      document.body.appendChild(zoomLens);
+      zoomLensImg = document.createElement("img");
+      return zoomLens.appendChild(zoomLensImg);
+    });
     return window.onetwo360 = function(cfg) {
-      var autorotate, cache360Images, currentAngle, elem, get360Config, img, init360Controls, init360Elem, updateImage, width;
+      var autorotate, cache360Images, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, recache, updateImage, width;
       currentAngle = 0;
       width = void 0;
+      doZoom = void 0;
+      endZoom = void 0;
+      recache = nop;
       elem = document.getElementById(cfg.elem_id);
       img = new Image();
+      eventHandler = touchHandler({
+        elem: img
+      });
       elem.appendChild(img);
       nextTick(function() {
         return get360Config();
@@ -295,20 +344,56 @@
       updateImage = function() {
         return img.src = cfg.imageURLs[floatPart(currentAngle / Math.PI / 2) * cfg.imageURLs.length | 0];
       };
-      return init360Controls = function() {
-        return touchHandler({
-          elem: img,
-          start: function(t) {
-            return void 0;
-          },
-          move: function(t) {
+      init360Controls = function() {
+        eventHandler.move = function(t) {
+          if (t.holding) {
+            return nextTick(function() {
+              return doZoom(t);
+            });
+          } else {
             currentAngle -= 2 * Math.PI * t.ddx / width;
             return updateImage();
-          },
-          end: function(t) {
-            return void 0;
           }
+        };
+        eventHandler.hold = function(t) {
+          return nextTick(function() {
+            return doZoom(t);
+          });
+        };
+        return eventHandler.end = function(t) {
+          return nextTick(function() {
+            return endZoom(t);
+          });
+        };
+      };
+      doZoom = function(t) {
+        var imgPos, zoomHeight, zoomLeftPos, zoomLens, zoomLensImg, zoomTopPos, zoomWidth;
+        zoomLens = document.getElementById("zoomLens360");
+        console.log(zoomLens);
+        zoomLensImg = zoomLens.children[0];
+        zoomLensImg.src = img.src;
+        zoomWidth = zoomLensImg.width;
+        zoomHeight = zoomLensImg.height;
+        imgPos = img.getBoundingClientRect();
+        console.log(imgPos.top, t.y);
+        zoomLeftPos = t.x + document.body.scrollLeft - zoomSize * .9;
+        zoomTopPos = t.y + document.body.scrollTop - zoomSize * .9;
+        setStyle(zoomLens, {
+          left: zoomLeftPos + "px",
+          top: zoomTopPos + "px",
+          display: "block"
         });
+        setStyle(zoomLensImg, {
+          position: "absolute",
+          left: zoomSize * .9 - ((t.x - imgPos.left) * zoomWidth / img.width) + "px",
+          top: zoomSize * .9 - ((t.y - imgPos.top) * zoomHeight / img.height) + "px"
+        });
+        return img.style.cursor = "crosshair";
+      };
+      return endZoom = function(t) {
+        img.style.cursor = "url(res/cursor_rotate.cur),move";
+        (document.getElementById("zoomLens360")).style.display = "none";
+        return recache();
       };
     };
   })();
