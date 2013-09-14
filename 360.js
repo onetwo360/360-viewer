@@ -3,7 +3,7 @@
 
 
 (function() {
-  var asyncEach, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, touchHandler,
+  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, touchHandler,
     __slice = [].slice;
 
   floatPart = function(n) {
@@ -68,13 +68,17 @@
   };
 
   setStyle = function(elem, obj) {
-    var key, val, _results;
-    _results = [];
+    var e, key, val;
     for (key in obj) {
       val = obj[key];
-      _results.push(elem.style[key] = val);
+      try {
+        elem.style[key] = val;
+      } catch (_error) {
+        e = _error;
+        e;
+      }
     }
-    return _results;
+    return elem;
   };
 
   onComplete = function(fn) {
@@ -92,9 +96,17 @@
     if (elem.addEventListener) {
       return elem.addEventListener(type, fn, false);
     } else {
-      return typeof elem.attachEvent === "function" ? elem.attachEvent("on" + type, fn) : void 0;
+      return elem.attachEvent("on" + type, fn);
     }
   };
+
+  if (Date.now == null) {
+    Date.now = function() {
+      return +new Date();
+    };
+  }
+
+  body = document.getElementsByTagName("body")[0];
 
   cacheImgs = function(urls, callback) {
     var loadImg;
@@ -115,10 +127,10 @@
     oldbody.style.display = "none";
     parent = elem.parentElement;
     nextSibling = elem.nextSibling;
-    document.body.appendChild(oldbody);
+    body.appendChild(oldbody);
     _ref = (function() {
       var _j, _len, _ref, _results;
-      _ref = document.body.childNodes;
+      _ref = body.childNodes;
       _results = [];
       for (_j = 0, _len = _ref.length; _j < _len; _j++) {
         node = _ref[_j];
@@ -132,7 +144,7 @@
         oldbody.appendChild(node);
       }
     }
-    document.body.appendChild(elem);
+    body.appendChild(elem);
     return function() {
       var _j, _len1, _ref1;
       _ref1 = (function() {
@@ -147,7 +159,7 @@
       })();
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         node = _ref1[_j];
-        document.body.appendChild(node);
+        body.appendChild(node);
       }
       oldbody.remove();
       if (nextSibling) {
@@ -161,9 +173,9 @@
   touchHandler = void 0;
 
   (function() {
-    var moveTouch, startTouch, stopTouch, tapDist2, tapLength, touch, updateTouch, windowTouch;
-    touch = false;
-    tapLength = 300;
+    var condCall, documentTouch, moveTouch, startTouch, stopTouch, tapDist2, tapLength, touch, updateTouch;
+    touch = void 0;
+    tapLength = 500;
     tapDist2 = 10 * 10;
     updateTouch = function(touch, e) {
       var x, y;
@@ -210,33 +222,38 @@
       }
       return touch = void 0;
     };
-    windowTouch = runOnce(function() {
-      var condCall;
-      condCall = function(fn) {
-        return function(e) {
-          var _ref;
-          if (!touch) {
-            return void 0;
-          }
+    condCall = function(fn) {
+      return function(e) {
+        var _ref;
+        if (!touch) {
+          return void 0;
+        }
+        if (typeof e.preventDefault === "function") {
           e.preventDefault();
-          return fn(((_ref = e.touches) != null ? _ref[0] : void 0) || e);
-        };
+        }
+        return fn(((_ref = e.touches) != null ? _ref[0] : void 0) || e);
       };
-      elemAddEventListener(window, "mousemove", condCall(moveTouch));
-      elemAddEventListener(window, "touchmove", condCall(moveTouch));
-      elemAddEventListener(window, "mouseup", condCall(stopTouch));
-      return elemAddEventListener(window, "touchend", condCall(stopTouch));
+    };
+    documentTouch = runOnce(function() {
+      elemAddEventListener(document, "mousemove", condCall(moveTouch));
+      elemAddEventListener(document, "touchmove", condCall(moveTouch));
+      elemAddEventListener(document, "mouseup", condCall(stopTouch));
+      return elemAddEventListener(document, "touchend", condCall(stopTouch));
     });
     return touchHandler = function(handler) {
       elemAddEventListener(handler.elem, "mousedown", function(e) {
-        e.preventDefault();
+        if (typeof e.preventDefault === "function") {
+          e.preventDefault();
+        }
         return startTouch(e, handler);
       });
       elemAddEventListener(handler.elem, "touchstart", function(e) {
-        e.preventDefault();
+        if (typeof e.preventDefault === "function") {
+          e.preventDefault();
+        }
         return startTouch(e.touches[0], handler);
       });
-      windowTouch();
+      documentTouch();
       handler.start || (handler.start = nop);
       handler.move || (handler.move = nop);
       handler.end || (handler.end = nop);
@@ -257,6 +274,7 @@
     };
     onComplete(function() {
       var zoomLens;
+      body = document.getElementsByTagName("body")[0];
       zoomLens = document.createElement("div");
       setStyle(zoomLens, {
         position: "absolute",
@@ -272,7 +290,7 @@
         display: "none"
       });
       zoomLens.id = "zoomLens360";
-      return document.body.appendChild(zoomLens);
+      return body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
       var autorotate, cache360Images, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, recache, updateImage, width;
@@ -331,9 +349,7 @@
         showNext = function() {
           if (i < cfg.imageURLs.length) {
             img.src = cfg.imageURLs[i++];
-            return img.onload = function() {
-              return setTimeout(showNext, 10);
-            };
+            return setTimeout(showNext, 100);
           } else {
             return done();
           }
@@ -372,8 +388,8 @@
         zoomHeight = 789;
         largeUrl = img.src;
         imgPos = img.getBoundingClientRect();
-        zoomLeftPos = t.x + document.body.scrollLeft - zoomSize * .9;
-        zoomTopPos = t.y + document.body.scrollTop - zoomSize * .9;
+        zoomLeftPos = t.x + body.scrollLeft - zoomSize * .9;
+        zoomTopPos = t.y + body.scrollTop - zoomSize * .9;
         bgLeft = zoomSize * .9 - ((t.x - imgPos.left) * zoomWidth / img.width);
         bgTop = zoomSize * .9 - ((t.y - imgPos.top) * zoomHeight / img.height);
         return setStyle(zoomLens, {
