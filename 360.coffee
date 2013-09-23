@@ -66,14 +66,16 @@ maximize = (elem) -> #{{{3
 
 # Touch handler {{{2
 touchHandler = undefined
+setTouch = undefined
 do ->
   # TODO: mostly dummy so far...
   touch = undefined
+  setTouch = (t) -> touch = t
 
   tapLength = 500 # maximum time for a click, - turns into a hold after that
   tapDist2 = 10*10 # maximum dragged (squared) distance for a click
 
-  updateTouch = (touch, e) ->
+  updateTouch = (touch, e) -> #{{{3
     x = e.clientX
     y = e.clientY
     touch.event = e
@@ -86,14 +88,14 @@ do ->
     touch.x = x
     touch.y = y
 
-  startTouch = (e, handler) ->
-    touch =
-      handler: handler
-      x0: e.clientX
-      y0: e.clientY
-      x: e.clientX
-      y: e.clientY
-      startTime: Date.now()
+  startTouch = (e, handler, touchObj) -> #{{{3
+    touch = touchObj
+    touch.handler = handler
+    touch.x0 = e.clientX
+    touch.y0 = e.clientY
+    touch.x = e.clientX
+    touch.y = e.clientY
+    touch.startTime = Date.now()
     updateTouch touch, e
     touch.ctx = handler.start(touch)
     holdHandler = ->
@@ -102,33 +104,33 @@ do ->
         touch.handler.hold touch
     setTimeout holdHandler, tapLength
 
-  moveTouch = (e) ->
+  moveTouch = (e) -> #{{{3
     updateTouch touch, e
     touch.ctx = touch.handler.move touch || touch.ctx
 
-  stopTouch = (e) ->
+  stopTouch = (e) -> #{{{3
     touch.handler.end touch
     touch.handler.click touch if touch.maxDist2 < tapDist2 && touch.time < tapLength
     touch = undefined
 
-  condCall = (fn) -> (e) ->
+  condCall = (fn) -> (e) -> #{{{3
     return undefined if !touch
     e.preventDefault?()
     fn(e.touches?[0] || e)
 
-  documentTouch = runOnce ->
+  documentTouch = runOnce -> #{{{3
     elemAddEventListener document, "mousemove", condCall moveTouch
     elemAddEventListener document, "touchmove", condCall moveTouch
     elemAddEventListener document, "mouseup", condCall stopTouch
     elemAddEventListener document, "touchend", condCall stopTouch
 
-  touchHandler = (handler) ->
+  touchHandler = (handler) -> #{{{3
     elemAddEventListener handler.elem, "mousedown", (e) ->
       e.preventDefault?()
-      startTouch e, handler
+      startTouch e, handler, {isMouse: true}
     elemAddEventListener handler.elem, "touchstart", (e) ->
       e.preventDefault?()
-      startTouch e.touches[0], handler
+      startTouch e.touches[0], handler, {}
 
     documentTouch()
     handler.start ||= nop
@@ -163,7 +165,7 @@ do ->
       cursor: "crosshair"
       backgroundColor: "rgba(100,100,100,0.8)"
       borderRadius: (zoomSize/2) + "px"
-      borderBottomRightRadius: (zoomSize/5) + "px"
+      #borderBottomRightRadius: (zoomSize/5) + "px"
       boxShadow: "0px 0px 40px 0px rgba(255,255,255,.7) inset, 4px 4px 9px 0px rgba(0,0,0,0.5)"
       display: "none"
     zoomLens.id = "zoomLens360"
@@ -228,13 +230,16 @@ do ->
     # init controls {{{3
     init360Controls = ->
       eventHandler.move = (t) ->
-        if t.holding
+        if t.holding || t.zoom360
           nextTick -> doZoom t
         else
           currentAngle -= 2 * Math.PI * t.ddx / width
           updateImage()
       eventHandler.hold = (t) -> nextTick -> doZoom t
       eventHandler.end = (t) -> nextTick -> endZoom t
+      eventHandler.click = (t) -> if t.isMouse
+        t.zoom360 = true
+        nextTick -> setTouch t
     # Zoom handling {{{3
     doZoom = (t) ->
       zoomLens = document.getElementById "zoomLens360"
@@ -242,10 +247,12 @@ do ->
       zoomHeight = 789
       largeUrl = img.src
       imgPos = img.getBoundingClientRect()
-      zoomLeftPos = t.x + body.scrollLeft - zoomSize * .9
-      zoomTopPos = t.y + body.scrollTop - zoomSize * .9
-      bgLeft = zoomSize*.9-((t.x-imgPos.left) * zoomWidth / (img.width))
-      bgTop = zoomSize*.9-((t.y-imgPos.top) * zoomHeight / (img.height))
+      touchX = .5
+      touchY = if t.isMouse then .5 else .9
+      zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX
+      zoomTopPos = t.y + body.scrollTop - zoomSize * touchY
+      bgLeft = zoomSize*touchX-((t.x-imgPos.left) * zoomWidth / (img.width))
+      bgTop = zoomSize*touchY-((t.y-imgPos.top) * zoomHeight / (img.height))
       setStyle zoomLens,
         display: "block"
         position: "absolute"

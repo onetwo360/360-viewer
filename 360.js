@@ -3,7 +3,7 @@
 
 
 (function() {
-  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, touchHandler,
+  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, setTouch, touchHandler,
     __slice = [].slice;
 
   floatPart = function(n) {
@@ -172,9 +172,14 @@
 
   touchHandler = void 0;
 
+  setTouch = void 0;
+
   (function() {
     var condCall, documentTouch, moveTouch, startTouch, stopTouch, tapDist2, tapLength, touch, updateTouch;
     touch = void 0;
+    setTouch = function(t) {
+      return touch = t;
+    };
     tapLength = 500;
     tapDist2 = 10 * 10;
     updateTouch = function(touch, e) {
@@ -191,16 +196,15 @@
       touch.x = x;
       return touch.y = y;
     };
-    startTouch = function(e, handler) {
+    startTouch = function(e, handler, touchObj) {
       var holdHandler;
-      touch = {
-        handler: handler,
-        x0: e.clientX,
-        y0: e.clientY,
-        x: e.clientX,
-        y: e.clientY,
-        startTime: Date.now()
-      };
+      touch = touchObj;
+      touch.handler = handler;
+      touch.x0 = e.clientX;
+      touch.y0 = e.clientY;
+      touch.x = e.clientX;
+      touch.y = e.clientY;
+      touch.startTime = Date.now();
       updateTouch(touch, e);
       touch.ctx = handler.start(touch);
       holdHandler = function() {
@@ -245,13 +249,15 @@
         if (typeof e.preventDefault === "function") {
           e.preventDefault();
         }
-        return startTouch(e, handler);
+        return startTouch(e, handler, {
+          isMouse: true
+        });
       });
       elemAddEventListener(handler.elem, "touchstart", function(e) {
         if (typeof e.preventDefault === "function") {
           e.preventDefault();
         }
-        return startTouch(e.touches[0], handler);
+        return startTouch(e.touches[0], handler, {});
       });
       documentTouch();
       handler.start || (handler.start = nop);
@@ -285,7 +291,6 @@
         cursor: "crosshair",
         backgroundColor: "rgba(100,100,100,0.8)",
         borderRadius: (zoomSize / 2) + "px",
-        borderBottomRightRadius: (zoomSize / 5) + "px",
         boxShadow: "0px 0px 40px 0px rgba(255,255,255,.7) inset, 4px 4px 9px 0px rgba(0,0,0,0.5)",
         display: "none"
       });
@@ -361,7 +366,7 @@
       };
       init360Controls = function() {
         eventHandler.move = function(t) {
-          if (t.holding) {
+          if (t.holding || t.zoom360) {
             return nextTick(function() {
               return doZoom(t);
             });
@@ -375,23 +380,33 @@
             return doZoom(t);
           });
         };
-        return eventHandler.end = function(t) {
+        eventHandler.end = function(t) {
           return nextTick(function() {
             return endZoom(t);
           });
         };
+        return eventHandler.click = function(t) {
+          if (t.isMouse) {
+            t.zoom360 = true;
+            return nextTick(function() {
+              return setTouch(t);
+            });
+          }
+        };
       };
       doZoom = function(t) {
-        var bgLeft, bgTop, imgPos, largeUrl, zoomHeight, zoomLeftPos, zoomLens, zoomTopPos, zoomWidth;
+        var bgLeft, bgTop, imgPos, largeUrl, touchX, touchY, zoomHeight, zoomLeftPos, zoomLens, zoomTopPos, zoomWidth;
         zoomLens = document.getElementById("zoomLens360");
         zoomWidth = 810;
         zoomHeight = 789;
         largeUrl = img.src;
         imgPos = img.getBoundingClientRect();
-        zoomLeftPos = t.x + body.scrollLeft - zoomSize * .9;
-        zoomTopPos = t.y + body.scrollTop - zoomSize * .9;
-        bgLeft = zoomSize * .9 - ((t.x - imgPos.left) * zoomWidth / img.width);
-        bgTop = zoomSize * .9 - ((t.y - imgPos.top) * zoomHeight / img.height);
+        touchX = .5;
+        touchY = t.isMouse ? .5 : .9;
+        zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX;
+        zoomTopPos = t.y + body.scrollTop - zoomSize * touchY;
+        bgLeft = zoomSize * touchX - ((t.x - imgPos.left) * zoomWidth / img.width);
+        bgTop = zoomSize * touchY - ((t.y - imgPos.top) * zoomHeight / img.height);
         return setStyle(zoomLens, {
           display: "block",
           position: "absolute",
