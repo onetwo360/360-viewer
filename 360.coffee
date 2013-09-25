@@ -248,7 +248,7 @@ do ->
       largeUrl = img.src
       imgPos = img.getBoundingClientRect()
       touchX = .5
-      touchY = if t.isMouse then .5 else 1
+      touchY = if t.isMouse then .5 else 1.1
       zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX
       zoomTopPos = t.y + body.scrollTop - zoomSize * touchY
       bgLeft = zoomSize*touchX-((t.x-imgPos.left) * zoomWidth / (img.width))
