@@ -20,15 +20,15 @@ asyncEach = (arr, fn, done) -> #{{{3
   undefined
 
 # Browser abstractions, only added here, because of requirement of no dependencies, - would otherwise use jquery or similar {{{2
-setStyle = (elem, obj) ->
+setStyle = (elem, obj) -> #{{{3
   for key, val of obj
     try
       elem.style[key] = val 
     catch e
       e
   elem
-onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10
-elemAddEventListener = (elem, type, fn) ->
+onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10 #{{{3
+elemAddEventListener = (elem, type, fn) -> #{{{3
   if elem.addEventListener
     elem.addEventListener type, fn, false
   else
@@ -162,7 +162,7 @@ do ->
       width: zoomSize + "px"
       height: zoomSize + "px"
       border: "0px solid black"
-      cursor: "crosshair"
+      cursor: "default"
       backgroundColor: "rgba(100,100,100,0.8)"
       borderRadius: (zoomSize/2) + "px"
       #borderBottomRightRadius: (zoomSize/5) + "px"
@@ -248,7 +248,7 @@ do ->
       largeUrl = img.src
       imgPos = img.getBoundingClientRect()
       touchX = .5
-      touchY = if t.isMouse then .5 else .9
+      touchY = if t.isMouse then .5 else 1
       zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX
       zoomTopPos = t.y + body.scrollTop - zoomSize * touchY
       bgLeft = zoomSize*touchX-((t.x-imgPos.left) * zoomWidth / (img.width))

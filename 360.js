@@ -288,7 +288,7 @@
         width: zoomSize + "px",
         height: zoomSize + "px",
         border: "0px solid black",
-        cursor: "crosshair",
+        cursor: "default",
         backgroundColor: "rgba(100,100,100,0.8)",
         borderRadius: (zoomSize / 2) + "px",
         boxShadow: "0px 0px 40px 0px rgba(255,255,255,.7) inset, 4px 4px 9px 0px rgba(0,0,0,0.5)",
@@ -402,7 +402,7 @@
         largeUrl = img.src;
         imgPos = img.getBoundingClientRect();
         touchX = .5;
-        touchY = t.isMouse ? .5 : .9;
+        touchY = t.isMouse ? .5 : 1;
         zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX;
         zoomTopPos = t.y + body.scrollTop - zoomSize * touchY;
         bgLeft = zoomSize * touchX - ((t.x - imgPos.left) * zoomWidth / img.width);
