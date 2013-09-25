@@ -402,7 +402,7 @@
         largeUrl = img.src;
         imgPos = img.getBoundingClientRect();
         touchX = .5;
-        touchY = t.isMouse ? .5 : 1;
+        touchY = t.isMouse ? .5 : 1.1;
         zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX;
         zoomTopPos = t.y + body.scrollTop - zoomSize * touchY;
         bgLeft = zoomSize * touchX - ((t.x - imgPos.left) * zoomWidth / img.width);
