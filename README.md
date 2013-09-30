@@ -1,35 +1,39 @@
 # ![.](https://ssl.solsort.com/_solsort.png) 360º viewer component
+## Done
+
+- Full version up and running
+- browser-support: IE8+, iOS 5+ Android 4+
+- rotate on drag
+- handle touch and mouse
+- zoom-lens effect(on desktop+mobile)
+- zoom on click (on desktop) and on hold (on mobile)
+- cursor icon
+- image caching / preloader
+- animate on load
+
 ## TODO
 ### Initial version
 
-- logo
+- avoid moving zoom-lens beyond image / constraint on edge
+- gif progress indicator
+- connect with API
+    - test/make sure it works also wit small data sets of 1. picture
+- zoom button
+- fullscreen button
+- labels/markers/interaction points
+- logo on top w/ fade-in/fade-out (maybe hide on touch after first interaction)
+    - nb. a la http://hammerti.me/workspace/photosphere
+- customer logo
 - fullscreen(on both desktop and mobile)
 - talk with api
-- labels/markers
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
 
 ### Future
 
 - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 - animate during load, instead of animate on load
-
-## Done
-
-- zoom(on desktop+mobile)
-- browser-support: IE8+, iOS 5+ Android 4+
-- cursor icon
-- image caching / preloader
-- rotate - drag
-- singletouch
-- animate on load
-- drag
-
-## Interaction
-
-- drag left/right: rotate
-  - rotation = x-drag scaled
-- tap/click: fullscreen, click on X or outside centered image to close
-- zoom (multitouch+multidrag: iOS + android 2.3.3+, zoom-button with lens on desktop)
+- thumbnails when few pictures (maybe instead of drag)
+- smoother animate on load
 
 ## Why img.src replacement
 
