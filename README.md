@@ -1,17 +1,20 @@
 # ![.](https://ssl.solsort.com/_solsort.png) 360º viewer component
 ## Done
 
-- Full version up and running
-- browser-support: IE8+, iOS 5+ Android 4+
-- rotate on drag
-- handle touch and mouse
-- zoom-lens effect(on desktop+mobile)
-- zoom on click (on desktop) and on hold (on mobile)
-- cursor icon
-- image caching / preloader
-- animate on load
+### Milestone 0 - September 2013
+
+- Version up and running
+- Browser-support: IE8+, iOS 5+ Android 4+
+- Rotate on drag
+- Handle touch and mouse
+- Zoom-lens effect(on desktop+mobile)
+- Zoom on click (on desktop) and on hold (on mobile)
+- Cursor icon
+- Image caching / preloader
+- Animate on load
 
 ## TODO
+
 ### Initial version
 
 - avoid moving zoom-lens beyond image / constraint on edge
