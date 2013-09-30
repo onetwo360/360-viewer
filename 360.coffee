@@ -1,15 +1,15 @@
 ### Util (open) {{{1 ###
-# General Util {{{2
+# General Utility functions {{{2
 floatPart = (n) -> n - Math.floor(n)
-extend = (target, sources...) ->
-  for source in sources
-    for key, val of source
-      target[key] = val
-  target
 nextTick = (fn) -> setTimeout fn, 0
 identityFn = (e) -> e
 nop = -> undefined
 runOnce = (fn) -> (args...) -> if fn then fn args...; fn = undefined else undefined
+extend = (target, sources...) -> #{{{3
+  for source in sources
+    for key, val of source
+      target[key] = val
+  target
 asyncEach = (arr, fn, done) -> #{{{3
   done = runOnce done
   remaining = arr.length
@@ -20,23 +20,24 @@ asyncEach = (arr, fn, done) -> #{{{3
   undefined
 
 # Browser abstractions, only added here, because of requirement of no dependencies, - would otherwise use jquery or similar {{{2
+onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10 #{{{3
 setStyle = (elem, obj) -> #{{{3
   for key, val of obj
     try
-      elem.style[key] = val 
+      elem.style[key] = val
     catch e
       e
   elem
-onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10 #{{{3
 elemAddEventListener = (elem, type, fn) -> #{{{3
   if elem.addEventListener
     elem.addEventListener type, fn, false
   else
     elem.attachEvent "on"+type, fn
 
-# Browser shim {{{2
+# Browser shims {{{2
 Date.now ?= -> (+ new Date())
-body = document.getElementsByTagName("body")[0]
+body = document.getElementsByTagName("body")[0] # TODO: run this after onload
+
 # Browser utils {{{2
 cacheImgs = (urls, callback) -> #{{{3
   loadImg = (url, done) ->
@@ -44,6 +45,7 @@ cacheImgs = (urls, callback) -> #{{{3
     img.src = url
     img.onload = -> done()
   asyncEach urls, loadImg, callback
+
 maximize = (elem) -> #{{{3
   oldbody = document.createElement "div"
   oldbody.style.display = "none"
@@ -68,7 +70,6 @@ maximize = (elem) -> #{{{3
 touchHandler = undefined
 setTouch = undefined
 do ->
-  # TODO: mostly dummy so far...
   touch = undefined
   setTouch = (t) -> touch = t
 
@@ -143,8 +144,6 @@ do ->
     handler
 
 # 360º specific (proprietary) {{{1
-# Controller {{{2 
-
 do ->
   zoomSize = 200
   eventHandler = undefined
@@ -187,7 +186,7 @@ do ->
     elem.appendChild img
     nextTick -> get360Config()
 
-    # get config+imagelist from server {{{3
+    # Get config+imagelist from server (DUMMY IMPLEMENTATION) {{{3
     get360Config = ->
       nextTick -> # TODO: replace with  async ajax from server
         serverConfig =
@@ -224,7 +223,8 @@ do ->
           done()
       showNext()
   
-    updateImage = -> #{{{3
+    # Update the current viewed image {{{3
+    updateImage = ->
       img.src = cfg.imageURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
 
     # init controls {{{3
@@ -240,6 +240,7 @@ do ->
       eventHandler.click = (t) -> if t.isMouse
         t.zoom360 = true
         nextTick -> setTouch t
+
     # Zoom handling {{{3
     doZoom = (t) ->
       zoomLens = document.getElementById "zoomLens360"
