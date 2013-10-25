@@ -39,6 +39,13 @@ Date.now ?= -> (+ new Date())
 body = document.getElementsByTagName("body")[0] # TODO: run this after onload
 
 # Browser utils {{{2
+get = (url, callback) ->
+  req = new XMLHttpRequest() #TODO IE-compat
+  req.onload = ->
+    callback null, req.responseText
+  req.open "get", url, true
+  req.send()
+
 cacheImgs = (urls, callback) -> #{{{3
   loadImg = (url, done) ->
     img = new Image()
@@ -275,3 +282,6 @@ do ->
       img.style.cursor = "url(res/cursor_rotate.cur),move"
       (document.getElementById "zoomLens360").style.display = "none"
       recache()
+# Scratchpad {{{1
+get "example-ck0j4dnk.json", (err, result)->
+  console.log JSON.parse result

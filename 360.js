@@ -3,7 +3,7 @@
 
 
 (function() {
-  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, setTouch, touchHandler,
+  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, get, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, setTouch, touchHandler,
     __slice = [].slice;
 
   floatPart = function(n) {
@@ -107,6 +107,16 @@
   }
 
   body = document.getElementsByTagName("body")[0];
+
+  get = function(url, callback) {
+    var req;
+    req = new XMLHttpRequest();
+    req.onload = function() {
+      return callback(null, req.responseText);
+    };
+    req.open("get", url, true);
+    return req.send();
+  };
 
   cacheImgs = function(urls, callback) {
     var loadImg;
@@ -431,5 +441,9 @@
       };
     };
   })();
+
+  get("example-ck0j4dnk.json", function(err, result) {
+    return console.log(JSON.parse(result));
+  });
 
 }).call(this);
