@@ -10,19 +10,6 @@
     return n - Math.floor(n);
   };
 
-  extend = function() {
-    var key, source, sources, target, val, _i, _len;
-    target = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-    for (_i = 0, _len = sources.length; _i < _len; _i++) {
-      source = sources[_i];
-      for (key in source) {
-        val = source[key];
-        target[key] = val;
-      }
-    }
-    return target;
-  };
-
   nextTick = function(fn) {
     return setTimeout(fn, 0);
   };
@@ -48,6 +35,19 @@
     };
   };
 
+  extend = function() {
+    var key, source, sources, target, val, _i, _len;
+    target = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+    for (_i = 0, _len = sources.length; _i < _len; _i++) {
+      source = sources[_i];
+      for (key in source) {
+        val = source[key];
+        target[key] = val;
+      }
+    }
+    return target;
+  };
+
   asyncEach = function(arr, fn, done) {
     var elem, next, remaining, _i, _len;
     done = runOnce(done);
@@ -67,6 +67,17 @@
     return void 0;
   };
 
+  onComplete = function(fn) {
+    var f;
+    return (f = function() {
+      if (document.readyState === "interactive" || document.readyState === "complete") {
+        return fn();
+      } else {
+        return setTimeout(f, 10);
+      }
+    })();
+  };
+
   setStyle = function(elem, obj) {
     var e, key, val;
     for (key in obj) {
@@ -79,17 +90,6 @@
       }
     }
     return elem;
-  };
-
-  onComplete = function(fn) {
-    var f;
-    return (f = function() {
-      if (document.readyState === "interactive" || document.readyState === "complete") {
-        return fn();
-      } else {
-        return setTimeout(f, 10);
-      }
-    })();
   };
 
   elemAddEventListener = function(elem, type, fn) {
@@ -395,18 +395,25 @@
         };
       };
       doZoom = function(t) {
-        var bgLeft, bgTop, imgPos, largeUrl, touchX, touchY, zoomHeight, zoomLeftPos, zoomLens, zoomTopPos, zoomWidth;
+        var bgLeft, bgTop, imgPos, largeUrl, maxX, maxY, minX, minY, touchX, touchY, x, y, zoomHeight, zoomLeftPos, zoomLens, zoomTopPos, zoomWidth;
         zoomLens = document.getElementById("zoomLens360");
         zoomWidth = 810;
         zoomHeight = 789;
         largeUrl = img.src;
         imgPos = img.getBoundingClientRect();
+        minY = imgPos.top + .5 * zoomSize;
+        maxY = imgPos.bottom - .5 * zoomSize;
+        minX = imgPos.left + .5 * zoomSize;
+        maxX = imgPos.right - .5 * zoomSize;
         touchX = .5;
         touchY = t.isMouse ? .5 : 1.1;
-        zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX;
-        zoomTopPos = t.y + body.scrollTop - zoomSize * touchY;
-        bgLeft = zoomSize * touchX - ((t.x - imgPos.left) * zoomWidth / img.width);
-        bgTop = zoomSize * touchY - ((t.y - imgPos.top) * zoomHeight / img.height);
+        y = Math.min(maxY, Math.max(minY, t.y));
+        x = Math.min(maxX, Math.max(minX, t.x));
+        zoomLeftPos = x + body.scrollLeft - zoomSize * touchX;
+        zoomTopPos = y + body.scrollTop - zoomSize * touchY;
+        console.log(imgPos, zoomTopPos, y);
+        bgLeft = zoomSize * touchX - ((x - imgPos.left) * zoomWidth / img.width);
+        bgTop = zoomSize * touchY - ((y - imgPos.top) * zoomHeight / img.height);
         return setStyle(zoomLens, {
           display: "block",
           position: "absolute",

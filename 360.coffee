@@ -248,12 +248,19 @@ do ->
       zoomHeight = 789
       largeUrl = img.src
       imgPos = img.getBoundingClientRect()
+      minY = imgPos.top + .5 * zoomSize
+      maxY = imgPos.bottom - .5 * zoomSize
+      minX = imgPos.left + .5 * zoomSize
+      maxX = imgPos.right - .5 * zoomSize
       touchX = .5
       touchY = if t.isMouse then .5 else 1.1
-      zoomLeftPos = t.x + body.scrollLeft - zoomSize * touchX
-      zoomTopPos = t.y + body.scrollTop - zoomSize * touchY
-      bgLeft = zoomSize*touchX-((t.x-imgPos.left) * zoomWidth / (img.width))
-      bgTop = zoomSize*touchY-((t.y-imgPos.top) * zoomHeight / (img.height))
+      y = Math.min(maxY, Math.max(minY, t.y))
+      x = Math.min(maxX, Math.max(minX, t.x))
+      zoomLeftPos = x + body.scrollLeft - zoomSize * touchX
+      zoomTopPos = y + body.scrollTop - zoomSize * touchY
+      console.log imgPos, zoomTopPos, y
+      bgLeft = zoomSize*touchX-((x-imgPos.left) * zoomWidth / (img.width))
+      bgTop = zoomSize*touchY-((y-imgPos.top) * zoomHeight / (img.height))
       setStyle zoomLens,
         display: "block"
         position: "absolute"

@@ -13,11 +13,13 @@
 - Image caching / preloader
 - Animate on load
 
+### Milestone 1 - October 2013
+- avoid moving zoom-lens beyond image / constraint on edge (NB: probably makes more sense to limit center of lense to image.)
+
 ## TODO
 
 ### Initial version
 
-- avoid moving zoom-lens beyond image / constraint on edge
 - gif progress indicator
 - connect with API
     - test/make sure it works also wit small data sets of 1. picture
