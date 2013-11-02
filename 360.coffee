@@ -155,6 +155,7 @@ do ->
   zoomHeight = undefined
   zoomSize = 200
   eventHandler = undefined
+  untouched = true
   default360Config = #{{{3
     autorotate: true
     imageURLs: undefined
@@ -222,20 +223,21 @@ do ->
           cursor: "url(res/cursor_rotate.cur),move"
         width = cfg.request_width
 
+        init360Controls()
         if cfg.autorotate
-          autorotate init360Controls
-        else
-          init360Controls()
+          autorotate nop
   
     # Load images into cache, and possibly autorotate {{{3
     cache360Images = (done) -> cacheImgs cfg.imageURLs, done
 
     # Autorotate {{{3
     autorotate = (done) ->
-      i = 0
+      untouched = true
+      currentAngle = 0
       showNext = ->
-        if i < cfg.imageURLs.length
-          img.src = cfg.imageURLs[i++]
+        if untouched and currentAngle < Math.PI * 2
+          currentAngle = currentAngle + 0.2
+          updateImage()
           #img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
           setTimeout showNext, 100
         else
@@ -255,6 +257,9 @@ do ->
           currentAngle -= 2 * Math.PI * t.ddx / width
           updateImage()
       eventHandler.hold = (t) -> nextTick -> doZoom t
+      eventHandler.start = (t) -> 
+        console.log "touched"
+        untouched = false
       eventHandler.end = (t) -> nextTick -> endZoom t
       eventHandler.click = (t) -> if t.isMouse
         t.zoom360 = true

@@ -281,11 +281,12 @@
   })();
 
   (function() {
-    var default360Config, eventHandler, zoomHeight, zoomSize, zoomWidth;
+    var default360Config, eventHandler, untouched, zoomHeight, zoomSize, zoomWidth;
     zoomWidth = void 0;
     zoomHeight = void 0;
     zoomSize = 200;
     eventHandler = void 0;
+    untouched = true;
     default360Config = {
       autorotate: true,
       imageURLs: void 0
@@ -372,10 +373,9 @@
             cursor: "url(res/cursor_rotate.cur),move"
           });
           width = cfg.request_width;
+          init360Controls();
           if (cfg.autorotate) {
-            return autorotate(init360Controls);
-          } else {
-            return init360Controls();
+            return autorotate(nop);
           }
         });
       };
@@ -383,11 +383,13 @@
         return cacheImgs(cfg.imageURLs, done);
       };
       autorotate = function(done) {
-        var i, showNext;
-        i = 0;
+        var showNext;
+        untouched = true;
+        currentAngle = 0;
         showNext = function() {
-          if (i < cfg.imageURLs.length) {
-            img.src = cfg.imageURLs[i++];
+          if (untouched && currentAngle < Math.PI * 2) {
+            currentAngle = currentAngle + 0.2;
+            updateImage();
             return setTimeout(showNext, 100);
           } else {
             return done();
@@ -413,6 +415,10 @@
           return nextTick(function() {
             return doZoom(t);
           });
+        };
+        eventHandler.start = function(t) {
+          console.log("touched");
+          return untouched = false;
         };
         eventHandler.end = function(t) {
           return nextTick(function() {
