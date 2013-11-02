@@ -330,13 +330,21 @@
       });
       elem.appendChild(container);
       container.appendChild(img);
+      img.src = "spinner.gif";
       setStyle(img, {
         position: "absolute",
-        top: "0px",
-        left: "0px"
+        top: "49%",
+        left: "49%"
       });
       overlay = function() {
         var fullScreenElem, h, w, zoomElem;
+        setStyle(img, {
+          top: "0px",
+          left: "0px"
+        });
+        if (typeof spinnerElem !== "undefined" && spinnerElem !== null) {
+          spinnerElem.remove();
+        }
         w = cfg.width;
         h = cfg.height;
         console.log(w, h);
@@ -345,7 +353,7 @@
         container.appendChild(logoElem);
         setStyle(logoElem, {
           position: "absolute",
-          top: h * .3 + "px",
+          top: h * .35 + "px",
           left: w * .25 + "px",
           opacity: "0.7",
           textShadow: "0px 0px 5px white",
@@ -423,8 +431,7 @@
             width: data.width + "px",
             height: data.height + "px"
           });
-          delete window[callbackName];
-          return overlay();
+          return delete window[callbackName];
         };
         scriptTag = document.createElement("script");
         scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName;
@@ -438,6 +445,7 @@
             cursor: "url(res/cursor_rotate.cur),move"
           });
           width = cfg.request_width;
+          overlay();
           init360Controls();
           if (cfg.autorotate) {
             return autorotate(nop);

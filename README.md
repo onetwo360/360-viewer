@@ -13,17 +13,17 @@
 - Image caching / preloader
 - Animate on load
 
-### Milestone 1 - October 2013
+### Milestone 1 - October/November 2013
 - avoid moving zoom-lens beyond image / constraint on edge
 - allow interaction during rotate
-
+- gif spinner indicator
 - logo on top with fade-out 
+
 ## TODO
 
 ### Initial version
 
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
-- gif progress indicator
 - zoom button
 - fullscreen button
 - labels/markers/interaction points
