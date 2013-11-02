@@ -311,18 +311,42 @@
       return body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
-      var autorotate, cache360Images, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, recache, updateImage, width;
+      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, logoElem, recache, updateImage, width;
       currentAngle = 0;
       width = void 0;
       doZoom = void 0;
       endZoom = void 0;
       recache = nop;
       elem = document.getElementById(cfg.elem_id);
+      container = document.createElement("div");
+      setStyle(container, {
+        display: "inline-block",
+        position: "relative"
+      });
       img = new Image();
       eventHandler = touchHandler({
-        elem: img
+        elem: elem
       });
-      elem.appendChild(img);
+      elem.appendChild(container);
+      container.appendChild(img);
+      setStyle(img, {
+        position: "absolute",
+        top: "0px",
+        left: "0px"
+      });
+      logoElem = document.createElement("div");
+      logoElem.innerHTML = "<i class=icon-OneTwo360Logo></i>";
+      container.appendChild(logoElem);
+      setStyle(logoElem, {
+        position: "absolute",
+        top: "150px",
+        left: "100px",
+        opacity: "0.7",
+        textShadow: "0px 0px 5px white",
+        fontSize: "80px",
+        color: "#333",
+        transition: "opacity 1s"
+      });
       nextTick(function() {
         return get360Config();
       });
@@ -359,6 +383,10 @@
           cfg = extend({}, default360Config, serverConfig, cfg);
           init360Elem();
           scriptTag.remove();
+          setStyle(container, {
+            width: data.width + "px",
+            height: data.height + "px"
+          });
           return delete window[callbackName];
         };
         scriptTag = document.createElement("script");
@@ -390,7 +418,7 @@
           if (untouched && currentAngle < Math.PI * 2) {
             currentAngle = currentAngle + 0.2;
             updateImage();
-            return setTimeout(showNext, 100);
+            return setTimeout(showNext, 60);
           } else {
             return done();
           }
@@ -418,6 +446,9 @@
         };
         eventHandler.start = function(t) {
           console.log("touched");
+          setStyle(logoElem, {
+            opacity: "0"
+          });
           return untouched = false;
         };
         eventHandler.end = function(t) {

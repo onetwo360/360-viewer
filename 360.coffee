@@ -190,10 +190,34 @@ do ->
 
     # Create img element for writing animation to {{{3
     elem = document.getElementById cfg.elem_id
+    container = document.createElement "div"
+    setStyle container,
+      display: "inline-block"
+      position: "relative"
     img = new Image()
-    eventHandler = touchHandler {elem: img}
-    elem.appendChild img
+    eventHandler = touchHandler {elem: elem}
+    elem.appendChild container
+    container.appendChild img
+    setStyle img,
+      position: "absolute"
+      top: "0px"
+      left: "0px"
+
+    logoElem  = document.createElement "div"
+    logoElem.innerHTML = "<i class=icon-OneTwo360Logo></i>"
+    container.appendChild logoElem
+    setStyle logoElem,
+      position: "absolute"
+      top: "150px"
+      left: "100px"
+      opacity: "0.7"
+      textShadow: "0px 0px 5px white"
+      fontSize: "80px"
+      color: "#333"
+      transition: "opacity 1s"
+
     nextTick -> get360Config()
+
 
     # Get config+imagelist from server (DUMMY IMPLEMENTATION) {{{3
     get360Config = ->
@@ -208,6 +232,9 @@ do ->
         cfg = extend {}, default360Config, serverConfig, cfg
         init360Elem()
         scriptTag.remove()
+        setStyle container,
+          width: data.width + "px"
+          height: data.height + "px"
         delete window[callbackName]
       scriptTag = document.createElement "script"
       # TODO: replace "" with "http://embed.onetwo360.com/"
@@ -239,7 +266,7 @@ do ->
           currentAngle = currentAngle + 0.2
           updateImage()
           #img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
-          setTimeout showNext, 100
+          setTimeout showNext, 60
         else
           done()
       showNext()
@@ -257,8 +284,10 @@ do ->
           currentAngle -= 2 * Math.PI * t.ddx / width
           updateImage()
       eventHandler.hold = (t) -> nextTick -> doZoom t
-      eventHandler.start = (t) -> 
+      eventHandler.start = (t) ->
         console.log "touched"
+        setStyle logoElem,
+          opacity: "0"
         untouched = false
       eventHandler.end = (t) -> nextTick -> endZoom t
       eventHandler.click = (t) -> if t.isMouse
