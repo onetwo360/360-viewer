@@ -37,7 +37,6 @@ elemAddEventListener = (elem, type, fn) -> #{{{3
 # Browser shims {{{2
 Date.now ?= -> (+ new Date())
 body = document.getElementsByTagName("body")[0] # TODO: run this after onload
-
 # Browser utils {{{2
 get = (url, callback) ->
   req = new XMLHttpRequest() #TODO IE-compat
@@ -152,6 +151,8 @@ do ->
 
 # 360º specific (proprietary) {{{1
 do ->
+  zoomWidth = undefined
+  zoomHeight = undefined
   zoomSize = 200
   eventHandler = undefined
   default360Config = #{{{3
@@ -195,11 +196,22 @@ do ->
 
     # Get config+imagelist from server (DUMMY IMPLEMENTATION) {{{3
     get360Config = ->
-      nextTick -> # TODO: replace with  async ajax from server
+      callbackName = "callback" # TODO: random
+      window[callbackName] = (data) ->
+        console.log data
         serverConfig =
-          imageURLs: ("testimg/#{i}.jpg" for i in [1..36])
+          imageURLs: (data.baseUrl + elem.normal for elem in data.files)
+          zoomURLs: (data.baseUrl + elem.zoom for elem in data.files)
+        zoomWidth = data.zoomWidth
+        zoomHeight = data.zoomHeight
         cfg = extend {}, default360Config, serverConfig, cfg
         init360Elem()
+        scriptTag.remove()
+        delete window[callbackName]
+      scriptTag = document.createElement "script"
+      # TODO: replace "" with "http://embed.onetwo360.com/"
+      scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName
+      document.getElementsByTagName("head")[0].appendChild scriptTag
   
     # Initialise the 360º object {{{3
     init360Elem = ->
@@ -251,14 +263,12 @@ do ->
     # Zoom handling {{{3
     doZoom = (t) ->
       zoomLens = document.getElementById "zoomLens360"
-      zoomWidth = 810
-      zoomHeight = 789
-      largeUrl = img.src
+      largeUrl = cfg.zoomURLs[floatPart(currentAngle/Math.PI/2) * cfg.zoomURLs.length | 0]
       imgPos = img.getBoundingClientRect()
-      minY = imgPos.top + .5 * zoomSize
-      maxY = imgPos.bottom - .5 * zoomSize
-      minX = imgPos.left + .5 * zoomSize
-      maxX = imgPos.right - .5 * zoomSize
+      minY = imgPos.top # + .5 * zoomSize
+      maxY = imgPos.bottom #- .5 * zoomSize
+      minX = imgPos.left #+ .5 * zoomSize
+      maxX = imgPos.right #- .5 * zoomSize
       touchX = .5
       touchY = if t.isMouse then .5 else 1.1
       y = Math.min(maxY, Math.max(minY, t.y))
@@ -282,6 +292,3 @@ do ->
       img.style.cursor = "url(res/cursor_rotate.cur),move"
       (document.getElementById "zoomLens360").style.display = "none"
       recache()
-# Scratchpad {{{1
-get "example-ck0j4dnk.json", (err, result)->
-  console.log JSON.parse result

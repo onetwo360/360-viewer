@@ -281,7 +281,9 @@
   })();
 
   (function() {
-    var default360Config, eventHandler, zoomSize;
+    var default360Config, eventHandler, zoomHeight, zoomSize, zoomWidth;
+    zoomWidth = void 0;
+    zoomHeight = void 0;
     zoomSize = 200;
     eventHandler = void 0;
     default360Config = {
@@ -324,21 +326,43 @@
         return get360Config();
       });
       get360Config = function() {
-        return nextTick(function() {
-          var i, serverConfig;
+        var callbackName, scriptTag;
+        callbackName = "callback";
+        window[callbackName] = function(data) {
+          var serverConfig;
+          console.log(data);
           serverConfig = {
             imageURLs: (function() {
-              var _i, _results;
+              var _i, _len, _ref, _results;
+              _ref = data.files;
               _results = [];
-              for (i = _i = 1; _i <= 36; i = ++_i) {
-                _results.push("testimg/" + i + ".jpg");
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                elem = _ref[_i];
+                _results.push(data.baseUrl + elem.normal);
+              }
+              return _results;
+            })(),
+            zoomURLs: (function() {
+              var _i, _len, _ref, _results;
+              _ref = data.files;
+              _results = [];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                elem = _ref[_i];
+                _results.push(data.baseUrl + elem.zoom);
               }
               return _results;
             })()
           };
+          zoomWidth = data.zoomWidth;
+          zoomHeight = data.zoomHeight;
           cfg = extend({}, default360Config, serverConfig, cfg);
-          return init360Elem();
-        });
+          init360Elem();
+          scriptTag.remove();
+          return delete window[callbackName];
+        };
+        scriptTag = document.createElement("script");
+        scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName;
+        return document.getElementsByTagName("head")[0].appendChild(scriptTag);
       };
       init360Elem = function() {
         return cache360Images(function() {
@@ -405,16 +429,14 @@
         };
       };
       doZoom = function(t) {
-        var bgLeft, bgTop, imgPos, largeUrl, maxX, maxY, minX, minY, touchX, touchY, x, y, zoomHeight, zoomLeftPos, zoomLens, zoomTopPos, zoomWidth;
+        var bgLeft, bgTop, imgPos, largeUrl, maxX, maxY, minX, minY, touchX, touchY, x, y, zoomLeftPos, zoomLens, zoomTopPos;
         zoomLens = document.getElementById("zoomLens360");
-        zoomWidth = 810;
-        zoomHeight = 789;
-        largeUrl = img.src;
+        largeUrl = cfg.zoomURLs[floatPart(currentAngle / Math.PI / 2) * cfg.zoomURLs.length | 0];
         imgPos = img.getBoundingClientRect();
-        minY = imgPos.top + .5 * zoomSize;
-        maxY = imgPos.bottom - .5 * zoomSize;
-        minX = imgPos.left + .5 * zoomSize;
-        maxX = imgPos.right - .5 * zoomSize;
+        minY = imgPos.top;
+        maxY = imgPos.bottom;
+        minX = imgPos.left;
+        maxX = imgPos.right;
         touchX = .5;
         touchY = t.isMouse ? .5 : 1.1;
         y = Math.min(maxY, Math.max(minY, t.y));
@@ -441,9 +463,5 @@
       };
     };
   })();
-
-  get("example-ck0j4dnk.json", function(err, result) {
-    return console.log(JSON.parse(result));
-  });
 
 }).call(this);
