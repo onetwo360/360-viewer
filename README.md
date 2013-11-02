@@ -14,15 +14,15 @@
 - Animate on load
 
 ### Milestone 1 - October 2013
-- avoid moving zoom-lens beyond image / constraint on edge (NB: probably makes more sense to limit center of lense to image.)
+- avoid moving zoom-lens beyond image / constraint on edge
+- allow interaction during rotate
 
 ## TODO
 
 ### Initial version
 
+- connect with API (implemented with local version, waiting for proper jsonp on backend)
 - gif progress indicator
-- connect with API
-    - test/make sure it works also wit small data sets of 1. picture
 - zoom button
 - fullscreen button
 - labels/markers/interaction points
@@ -30,11 +30,12 @@
     - nb. a la http://hammerti.me/workspace/photosphere
 - customer logo
 - fullscreen(on both desktop and mobile)
-- talk with api
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
+- IE - test
 
 ### Future
 
+- test/make sure it works also wit small data sets of 1. picture
 - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 - animate during load, instead of animate on load
 - thumbnails when few pictures (maybe instead of drag)
