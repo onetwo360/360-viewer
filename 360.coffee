@@ -187,6 +187,7 @@ do ->
     doZoom = undefined
     endZoom = undefined
     recache = nop # TODO: replace with function that reloads animation into cache
+    logoElem = undefined
 
     # Create img element for writing animation to {{{3
     elem = document.getElementById cfg.elem_id
@@ -203,18 +204,49 @@ do ->
       top: "0px"
       left: "0px"
 
-    logoElem  = document.createElement "div"
-    logoElem.innerHTML = "<i class=icon-OneTwo360Logo></i>"
-    container.appendChild logoElem
-    setStyle logoElem,
-      position: "absolute"
-      top: "150px"
-      left: "100px"
-      opacity: "0.7"
-      textShadow: "0px 0px 5px white"
-      fontSize: "80px"
-      color: "#333"
-      transition: "opacity 1s"
+
+    overlay = ->
+      w = cfg.width
+      h = cfg.height
+      console.log w, h
+      logoElem = document.createElement "i"
+      logoElem.className = "icon-OneTwo360Logo"
+      container.appendChild logoElem
+      setStyle logoElem,
+        position: "absolute"
+        top: h*.3 + "px"
+        left: w*.25  + "px"
+        opacity: "0.7"
+        textShadow: "0px 0px 5px white"
+        fontSize: h*.2 + "px"
+        color: "#333"
+        transition: "opacity 1s"
+      logoElem.onmouseover = ->
+        logoElem.style.opacity = "0"
+
+      fullScreenElem = document.createElement "i"
+      fullScreenElem.className = "fa fa-fullscreen"
+      container.appendChild fullScreenElem
+      setStyle fullScreenElem,
+        position: "absolute"
+        top: h *.9 + "px"
+        left : w - h *.1 + "px"
+        fontSize: h * .08 + "px"
+        color: "#333"
+        opacity: "0.7"
+        textShadow: "0px 0px 5px white"
+
+      zoomElem = document.createElement "i"
+      zoomElem.className = "fa fa-search"
+      container.appendChild zoomElem
+      setStyle zoomElem,
+        position: "absolute"
+        top: h *.9 + "px"
+        left : h *.02 + "px"
+        fontSize: h * .08 + "px"
+        color: "#333"
+        opacity: "0.7"
+        textShadow: "0px 0px 5px white"
 
     nextTick -> get360Config()
 
@@ -227,6 +259,8 @@ do ->
         serverConfig =
           imageURLs: (data.baseUrl + elem.normal for elem in data.files)
           zoomURLs: (data.baseUrl + elem.zoom for elem in data.files)
+          width: data.width
+          height: data.width
         zoomWidth = data.zoomWidth
         zoomHeight = data.zoomHeight
         cfg = extend {}, default360Config, serverConfig, cfg
@@ -236,6 +270,7 @@ do ->
           width: data.width + "px"
           height: data.height + "px"
         delete window[callbackName]
+        overlay();
       scriptTag = document.createElement "script"
       # TODO: replace "" with "http://embed.onetwo360.com/"
       scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName

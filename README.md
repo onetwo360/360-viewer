@@ -17,6 +17,7 @@
 - avoid moving zoom-lens beyond image / constraint on edge
 - allow interaction during rotate
 
+- logo on top with fade-out 
 ## TODO
 
 ### Initial version
@@ -26,8 +27,6 @@
 - zoom button
 - fullscreen button
 - labels/markers/interaction points
-- logo on top w/ fade-in/fade-out (maybe hide on touch after first interaction)
-    - nb. a la http://hammerti.me/workspace/photosphere
 - customer logo
 - fullscreen(on both desktop and mobile)
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger

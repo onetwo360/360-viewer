@@ -311,12 +311,13 @@
       return body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
-      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, logoElem, recache, updateImage, width;
+      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, logoElem, overlay, recache, updateImage, width;
       currentAngle = 0;
       width = void 0;
       doZoom = void 0;
       endZoom = void 0;
       recache = nop;
+      logoElem = void 0;
       elem = document.getElementById(cfg.elem_id);
       container = document.createElement("div");
       setStyle(container, {
@@ -334,19 +335,52 @@
         top: "0px",
         left: "0px"
       });
-      logoElem = document.createElement("div");
-      logoElem.innerHTML = "<i class=icon-OneTwo360Logo></i>";
-      container.appendChild(logoElem);
-      setStyle(logoElem, {
-        position: "absolute",
-        top: "150px",
-        left: "100px",
-        opacity: "0.7",
-        textShadow: "0px 0px 5px white",
-        fontSize: "80px",
-        color: "#333",
-        transition: "opacity 1s"
-      });
+      overlay = function() {
+        var fullScreenElem, h, w, zoomElem;
+        w = cfg.width;
+        h = cfg.height;
+        console.log(w, h);
+        logoElem = document.createElement("i");
+        logoElem.className = "icon-OneTwo360Logo";
+        container.appendChild(logoElem);
+        setStyle(logoElem, {
+          position: "absolute",
+          top: h * .3 + "px",
+          left: w * .25 + "px",
+          opacity: "0.7",
+          textShadow: "0px 0px 5px white",
+          fontSize: h * .2 + "px",
+          color: "#333",
+          transition: "opacity 1s"
+        });
+        logoElem.onmouseover = function() {
+          return logoElem.style.opacity = "0";
+        };
+        fullScreenElem = document.createElement("i");
+        fullScreenElem.className = "fa fa-fullscreen";
+        container.appendChild(fullScreenElem);
+        setStyle(fullScreenElem, {
+          position: "absolute",
+          top: h * .9 + "px",
+          left: w - h * .1 + "px",
+          fontSize: h * .08 + "px",
+          color: "#333",
+          opacity: "0.7",
+          textShadow: "0px 0px 5px white"
+        });
+        zoomElem = document.createElement("i");
+        zoomElem.className = "fa fa-search";
+        container.appendChild(zoomElem);
+        return setStyle(zoomElem, {
+          position: "absolute",
+          top: h * .9 + "px",
+          left: h * .02 + "px",
+          fontSize: h * .08 + "px",
+          color: "#333",
+          opacity: "0.7",
+          textShadow: "0px 0px 5px white"
+        });
+      };
       nextTick(function() {
         return get360Config();
       });
@@ -376,7 +410,9 @@
                 _results.push(data.baseUrl + elem.zoom);
               }
               return _results;
-            })()
+            })(),
+            width: data.width,
+            height: data.width
           };
           zoomWidth = data.zoomWidth;
           zoomHeight = data.zoomHeight;
@@ -387,7 +423,8 @@
             width: data.width + "px",
             height: data.height + "px"
           });
-          return delete window[callbackName];
+          delete window[callbackName];
+          return overlay();
         };
         scriptTag = document.createElement("script");
         scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName;
