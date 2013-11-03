@@ -24,11 +24,11 @@
 ### Initial version
 
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
+- fullscreen(on both desktop and mobile)
 - zoom button
 - fullscreen button
 - labels/markers/interaction points
 - customer logo
-- fullscreen(on both desktop and mobile)
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
 - IE - test
 

@@ -184,6 +184,7 @@ do ->
 
     currentAngle = 0
     width = undefined
+    height = undefined
     doZoom = undefined
     endZoom = undefined
     recache = nop # TODO: replace with function that reloads animation into cache
@@ -211,9 +212,8 @@ do ->
         top: "0px"
         left: "0px"
       spinnerElem?.remove()
-      w = cfg.width
-      h = cfg.height
-      console.log w, h
+      w = cfg.request_width
+      h = cfg.request_height
       logoElem = document.createElement "i"
       logoElem.className = "icon-OneTwo360Logo"
       container.appendChild logoElem
@@ -229,29 +229,31 @@ do ->
       logoElem.onmouseover = ->
         logoElem.style.opacity = "0"
 
+      buttonStyle = (el) ->
+        setStyle el,
+          position: "absolute"
+          color: "#333"
+          opacity: "0.7"
+          textShadow: "0px 0px 5px white"
+          backgroundColor: "rgba(255,255,255,0)"
+          fontSize: h * .08 + "px"
+          padding: h*.02 +"px"
+        el
+
       fullScreenElem = document.createElement "i"
       fullScreenElem.className = "fa fa-fullscreen"
+      fullScreenElem.ontouchstart = fullScreenElem.onmousedown = toggleFullScreen
       container.appendChild fullScreenElem
-      setStyle fullScreenElem,
-        position: "absolute"
-        top: h *.9 + "px"
-        left : w - h *.1 + "px"
-        fontSize: h * .08 + "px"
-        color: "#333"
-        opacity: "0.7"
-        textShadow: "0px 0px 5px white"
+      setStyle (buttonStyle fullScreenElem),
+        top: h *.85 + "px"
+        left : w - h *.15 + "px"
 
       zoomElem = document.createElement "i"
       zoomElem.className = "fa fa-search"
       container.appendChild zoomElem
-      setStyle zoomElem,
-        position: "absolute"
-        top: h *.9 + "px"
-        left : h *.02 + "px"
-        fontSize: h * .08 + "px"
-        color: "#333"
-        opacity: "0.7"
-        textShadow: "0px 0px 5px white"
+      setStyle (buttonStyle zoomElem),
+        top: h *.85 + "px"
+        left : 0 + "px"
 
     nextTick -> get360Config()
 
@@ -260,12 +262,11 @@ do ->
     get360Config = ->
       callbackName = "callback" # TODO: random
       window[callbackName] = (data) ->
-        console.log data
         serverConfig =
-          imageURLs: (data.baseUrl + elem.normal for elem in data.files)
-          zoomURLs: (data.baseUrl + elem.zoom for elem in data.files)
-          width: data.width
-          height: data.width
+          imageURLs: (data.baseUrl + file.normal for file in data.files)
+          zoomURLs: (data.baseUrl + file.zoom for file in data.files)
+          request_width: data.width
+          request_height: data.width
         zoomWidth = data.zoomWidth
         zoomHeight = data.zoomHeight
         cfg = extend {}, default360Config, serverConfig, cfg
@@ -288,6 +289,7 @@ do ->
           height: cfg.request_height + "px"
           cursor: "url(res/cursor_rotate.cur),move"
         width = cfg.request_width
+        height = cfg.request_height
 
         overlay()
         init360Controls()
@@ -325,7 +327,6 @@ do ->
           updateImage()
       eventHandler.hold = (t) -> nextTick -> doZoom t
       eventHandler.start = (t) ->
-        console.log "touched"
         setStyle logoElem,
           opacity: "0"
         untouched = false
@@ -349,7 +350,6 @@ do ->
       x = Math.min(maxX, Math.max(minX, t.x))
       zoomLeftPos = x + body.scrollLeft - zoomSize * touchX
       zoomTopPos = y + body.scrollTop - zoomSize * touchY
-      console.log imgPos, zoomTopPos, y
       bgLeft = zoomSize*touchX-((x-imgPos.left) * zoomWidth / (img.width))
       bgTop = zoomSize*touchY-((y-imgPos.top) * zoomHeight / (img.height))
       setStyle zoomLens,
@@ -366,3 +366,51 @@ do ->
       img.style.cursor = "url(res/cursor_rotate.cur),move"
       (document.getElementById "zoomLens360").style.display = "none"
       recache()
+
+    # fullscreen {{{3
+    fullScreenOriginalState = undefined
+    toggleFullScreen = (e)->
+      scaleFactor = Math.min(window.innerWidth / width, window.innerHeight / height)
+      e.preventDefault()
+      e.stopPropagation()
+
+      if fullScreenOriginalState
+        setStyle elem,
+          fullScreenOriginalState
+        fullScreenOriginalState = undefined
+      else
+        style = elem.style
+        fullScreenOriginalState =
+          position: style.position
+          top: style.top
+          left: style.top
+          zoom: style.zoom
+          transform: style.transform
+          webkitTransform: style.webkitTransform
+          msTransform: style.msTransform
+          transformOrigin: style.transformOrigin
+          webkitTransformOrigin: style.webkitTransformOrigin
+          msTransformOrigin: style.msTransformOrigin
+          margin: style.margin
+          padding: style.padding
+          background: style.background
+        scaleStr = "scale(#{scaleFactor}, #{scaleFactor})"
+        widthPad = ((window.innerWidth  / (scaleFactor * width)) - 1)/2 * width
+        heightPad = ((window.innerHeight  / (scaleFactor * width)) - 1)/2 * width
+        console.log heightPad, widthPad
+        setStyle elem,
+          margin: "0"
+          padding: "#{heightPad}px #{widthPad}px #{heightPad}px #{widthPad}px"
+          background: "blue"
+          position: "fixed"
+          top: "0px"
+          left: "0px"
+          transform: scaleStr
+          webkitTransform: scaleStr
+          msTransform: scaleStr
+          transformOrigin: "0 0"
+          webkitTransformOrigin: "0 0"
+          msTransformOrigin: "0 0"
+      console.log width, height
+      console.log scaleFactor, elem.style.position, elem.style.top, elem.style.left
+      false

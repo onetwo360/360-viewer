@@ -311,9 +311,10 @@
       return body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
-      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, get360Config, img, init360Controls, init360Elem, logoElem, overlay, recache, updateImage, width;
+      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, fullScreenOriginalState, get360Config, height, img, init360Controls, init360Elem, logoElem, overlay, recache, toggleFullScreen, updateImage, width;
       currentAngle = 0;
       width = void 0;
+      height = void 0;
       doZoom = void 0;
       endZoom = void 0;
       recache = nop;
@@ -337,7 +338,7 @@
         left: "49%"
       });
       overlay = function() {
-        var fullScreenElem, h, w, zoomElem;
+        var buttonStyle, fullScreenElem, h, w, zoomElem;
         setStyle(img, {
           top: "0px",
           left: "0px"
@@ -345,9 +346,8 @@
         if (typeof spinnerElem !== "undefined" && spinnerElem !== null) {
           spinnerElem.remove();
         }
-        w = cfg.width;
-        h = cfg.height;
-        console.log(w, h);
+        w = cfg.request_width;
+        h = cfg.request_height;
         logoElem = document.createElement("i");
         logoElem.className = "icon-OneTwo360Logo";
         container.appendChild(logoElem);
@@ -364,29 +364,32 @@
         logoElem.onmouseover = function() {
           return logoElem.style.opacity = "0";
         };
+        buttonStyle = function(el) {
+          setStyle(el, {
+            position: "absolute",
+            color: "#333",
+            opacity: "0.7",
+            textShadow: "0px 0px 5px white",
+            backgroundColor: "rgba(255,255,255,0)",
+            fontSize: h * .08 + "px",
+            padding: h * .02 + "px"
+          });
+          return el;
+        };
         fullScreenElem = document.createElement("i");
         fullScreenElem.className = "fa fa-fullscreen";
+        fullScreenElem.ontouchstart = fullScreenElem.onmousedown = toggleFullScreen;
         container.appendChild(fullScreenElem);
-        setStyle(fullScreenElem, {
-          position: "absolute",
-          top: h * .9 + "px",
-          left: w - h * .1 + "px",
-          fontSize: h * .08 + "px",
-          color: "#333",
-          opacity: "0.7",
-          textShadow: "0px 0px 5px white"
+        setStyle(buttonStyle(fullScreenElem), {
+          top: h * .85 + "px",
+          left: w - h * .15 + "px"
         });
         zoomElem = document.createElement("i");
         zoomElem.className = "fa fa-search";
         container.appendChild(zoomElem);
-        return setStyle(zoomElem, {
-          position: "absolute",
-          top: h * .9 + "px",
-          left: h * .02 + "px",
-          fontSize: h * .08 + "px",
-          color: "#333",
-          opacity: "0.7",
-          textShadow: "0px 0px 5px white"
+        return setStyle(buttonStyle(zoomElem), {
+          top: h * .85 + "px",
+          left: 0 + "px"
         });
       };
       nextTick(function() {
@@ -396,16 +399,15 @@
         var callbackName, scriptTag;
         callbackName = "callback";
         window[callbackName] = function(data) {
-          var serverConfig;
-          console.log(data);
+          var file, serverConfig;
           serverConfig = {
             imageURLs: (function() {
               var _i, _len, _ref, _results;
               _ref = data.files;
               _results = [];
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                elem = _ref[_i];
-                _results.push(data.baseUrl + elem.normal);
+                file = _ref[_i];
+                _results.push(data.baseUrl + file.normal);
               }
               return _results;
             })(),
@@ -414,13 +416,13 @@
               _ref = data.files;
               _results = [];
               for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                elem = _ref[_i];
-                _results.push(data.baseUrl + elem.zoom);
+                file = _ref[_i];
+                _results.push(data.baseUrl + file.zoom);
               }
               return _results;
             })(),
-            width: data.width,
-            height: data.width
+            request_width: data.width,
+            request_height: data.width
           };
           zoomWidth = data.zoomWidth;
           zoomHeight = data.zoomHeight;
@@ -445,6 +447,7 @@
             cursor: "url(res/cursor_rotate.cur),move"
           });
           width = cfg.request_width;
+          height = cfg.request_height;
           overlay();
           init360Controls();
           if (cfg.autorotate) {
@@ -490,7 +493,6 @@
           });
         };
         eventHandler.start = function(t) {
-          console.log("touched");
           setStyle(logoElem, {
             opacity: "0"
           });
@@ -525,7 +527,6 @@
         x = Math.min(maxX, Math.max(minX, t.x));
         zoomLeftPos = x + body.scrollLeft - zoomSize * touchX;
         zoomTopPos = y + body.scrollTop - zoomSize * touchY;
-        console.log(imgPos, zoomTopPos, y);
         bgLeft = zoomSize * touchX - ((x - imgPos.left) * zoomWidth / img.width);
         bgTop = zoomSize * touchY - ((y - imgPos.top) * zoomHeight / img.height);
         return setStyle(zoomLens, {
@@ -538,10 +539,59 @@
           backgroundRepeat: "no-repeat"
         });
       };
-      return endZoom = function(t) {
+      endZoom = function(t) {
         img.style.cursor = "url(res/cursor_rotate.cur),move";
         (document.getElementById("zoomLens360")).style.display = "none";
         return recache();
+      };
+      fullScreenOriginalState = void 0;
+      return toggleFullScreen = function(e) {
+        var heightPad, scaleFactor, scaleStr, style, widthPad;
+        scaleFactor = Math.min(window.innerWidth / width, window.innerHeight / height);
+        e.preventDefault();
+        e.stopPropagation();
+        if (fullScreenOriginalState) {
+          setStyle(elem, fullScreenOriginalState);
+          fullScreenOriginalState = void 0;
+        } else {
+          style = elem.style;
+          fullScreenOriginalState = {
+            position: style.position,
+            top: style.top,
+            left: style.top,
+            zoom: style.zoom,
+            transform: style.transform,
+            webkitTransform: style.webkitTransform,
+            msTransform: style.msTransform,
+            transformOrigin: style.transformOrigin,
+            webkitTransformOrigin: style.webkitTransformOrigin,
+            msTransformOrigin: style.msTransformOrigin,
+            margin: style.margin,
+            padding: style.padding,
+            background: style.background
+          };
+          scaleStr = "scale(" + scaleFactor + ", " + scaleFactor + ")";
+          widthPad = ((window.innerWidth / (scaleFactor * width)) - 1) / 2 * width;
+          heightPad = ((window.innerHeight / (scaleFactor * width)) - 1) / 2 * width;
+          console.log(heightPad, widthPad);
+          setStyle(elem, {
+            margin: "0",
+            padding: "" + heightPad + "px " + widthPad + "px " + heightPad + "px " + widthPad + "px",
+            background: "blue",
+            position: "fixed",
+            top: "0px",
+            left: "0px",
+            transform: scaleStr,
+            webkitTransform: scaleStr,
+            msTransform: scaleStr,
+            transformOrigin: "0 0",
+            webkitTransformOrigin: "0 0",
+            msTransformOrigin: "0 0"
+          });
+        }
+        console.log(width, height);
+        console.log(scaleFactor, elem.style.position, elem.style.top, elem.style.left);
+        return false;
       };
     };
   })();
