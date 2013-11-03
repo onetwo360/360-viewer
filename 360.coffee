@@ -187,7 +187,6 @@ do ->
     height = undefined
     doZoom = undefined
     endZoom = undefined
-    recache = nop # TODO: replace with function that reloads animation into cache
     logoElem = undefined
 
     # Create img element for writing animation to {{{3
@@ -386,7 +385,7 @@ do ->
       zoomSrc = undefined
       img.style.cursor = "url(res/cursor_rotate.cur),move"
       (document.getElementById "zoomLens360").style.display = "none"
-      recache()
+      cache360Images nop
 
     # fullscreen {{{3
     fullScreenOriginalState = undefined

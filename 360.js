@@ -311,13 +311,12 @@
       return body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
-      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, fullScreenOriginalState, get360Config, height, img, init360Controls, init360Elem, logoElem, overlay, recache, toggleFullScreen, updateImage, width, zoomSrc;
+      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, fullScreenOriginalState, get360Config, height, img, init360Controls, init360Elem, logoElem, overlay, toggleFullScreen, updateImage, width, zoomSrc;
       currentAngle = 0;
       width = void 0;
       height = void 0;
       doZoom = void 0;
       endZoom = void 0;
-      recache = nop;
       logoElem = void 0;
       elem = document.getElementById(cfg.elem_id);
       container = document.createElement("div");
@@ -566,7 +565,7 @@
         zoomSrc = void 0;
         img.style.cursor = "url(res/cursor_rotate.cur),move";
         (document.getElementById("zoomLens360")).style.display = "none";
-        return recache();
+        return cache360Images(nop);
       };
       fullScreenOriginalState = void 0;
       return toggleFullScreen = function(e) {
