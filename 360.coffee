@@ -405,6 +405,7 @@ do ->
           position: "fixed"
           top: "0px"
           left: "0px"
+          zoom: scaleFactor
           transform: scaleStr
           webkitTransform: scaleStr
           msTransform: scaleStr

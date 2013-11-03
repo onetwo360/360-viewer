@@ -18,15 +18,17 @@
 - allow interaction during rotate
 - gif spinner indicator
 - logo on top with fade-out 
+- zoom button
+- fullscreen button
+- fullscreen(on both desktop and mobile)
 
 ## TODO
 
 ### Initial version
 
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
-- fullscreen(on both desktop and mobile)
-- zoom button
-- fullscreen button
+- zoom when fullscreen
+- fullscreen issues on ie8 and android-user-scale
 - labels/markers/interaction points
 - customer logo
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
