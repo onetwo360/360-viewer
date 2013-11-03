@@ -21,12 +21,12 @@
 - zoom button
 - fullscreen button
 - fullscreen(on both desktop and mobile)
+- dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
 
 ## TODO
 
 ### Initial version
 
-- dynamic load hi-res images (on fullscreen after 2s same image + zoom use scaled lo-res when starting) + recache lo-res
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
 - IE - test
 

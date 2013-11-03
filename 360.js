@@ -3,8 +3,12 @@
 
 
 (function() {
-  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, get, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, setTouch, touchHandler,
+  var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, get, identityFn, maximize, nextTick, nop, onComplete, runOnce, setStyle, setTouch, sleep, touchHandler,
     __slice = [].slice;
+
+  sleep = function(time, fn) {
+    return setTimeout(fn, time * 1000);
+  };
 
   floatPart = function(n) {
     return n - Math.floor(n);
@@ -480,7 +484,23 @@
         return showNext();
       };
       updateImage = function() {
-        return img.src = cfg.imageURLs[floatPart(currentAngle / Math.PI / 2) * cfg.imageURLs.length | 0];
+        var imgsrc;
+        img.src = cfg.imageURLs[floatPart(currentAngle / Math.PI / 2) * cfg.imageURLs.length | 0];
+        imgsrc = img.src;
+        if (fullScreenOriginalState) {
+          return sleep(.5, function() {
+            var largeImage;
+            largeImage = new Image;
+            largeImage.onload = function() {
+              console.log("here", imgsrc, img.src);
+              if (imgsrc === img.src) {
+                img.src = largeImage.src;
+              }
+              return cache360Images(nop);
+            };
+            return largeImage.src = cfg.zoomURLs[floatPart(currentAngle / Math.PI / 2) * cfg.imageURLs.length | 0];
+          });
+        }
       };
       init360Controls = function() {
         eventHandler.move = function(t) {
@@ -611,6 +631,7 @@
             elem.style.zoom = scaleFactor;
           }
         }
+        updateImage();
         return false;
       };
     };

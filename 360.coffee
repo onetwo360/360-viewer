@@ -1,4 +1,5 @@
 ### Util (open) {{{1 ###
+sleep = (time, fn) -> setTimeout fn, time*1000
 # General Utility functions {{{2
 floatPart = (n) -> n - Math.floor(n)
 nextTick = (fn) -> setTimeout fn, 0
@@ -321,6 +322,16 @@ do ->
     # Update the current viewed image {{{3
     updateImage = ->
       img.src = cfg.imageURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
+      imgsrc = img.src
+      if fullScreenOriginalState
+        sleep .5, ->
+          largeImage = new Image
+          largeImage.onload = ->
+            console.log "here", imgsrc, img.src
+            if imgsrc == img.src
+              img.src = largeImage.src
+            cache360Images nop
+          largeImage.src = cfg.zoomURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
 
     # init controls {{{3
     init360Controls = ->
@@ -428,4 +439,5 @@ do ->
             webkitTransformOrigin: "0 0"
         else
           elem.style.zoom = scaleFactor
+      updateImage()
       false
