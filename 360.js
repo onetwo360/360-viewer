@@ -311,7 +311,7 @@
       return body.appendChild(zoomLens);
     });
     return window.onetwo360 = function(cfg) {
-      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, fullScreenOriginalState, get360Config, height, img, init360Controls, init360Elem, logoElem, overlay, recache, toggleFullScreen, updateImage, width;
+      var autorotate, cache360Images, container, currentAngle, doZoom, elem, endZoom, fullScreenOriginalState, get360Config, height, img, init360Controls, init360Elem, logoElem, overlay, recache, toggleFullScreen, updateImage, width, zoomSrc;
       currentAngle = 0;
       width = void 0;
       height = void 0;
@@ -519,10 +519,23 @@
           }
         };
       };
+      zoomSrc = void 0;
       doZoom = function(t) {
-        var bgLeft, bgTop, imgHeight, imgPos, imgWidth, largeUrl, maxX, maxY, minX, minY, touchX, touchY, x, y, zoomLeftPos, zoomLens, zoomTopPos;
+        var bgLeft, bgTop, imgHeight, imgPos, imgWidth, largeSrc, loadZoom, maxX, maxY, minX, minY, normalSrc, touchX, touchY, x, y, zoomLeftPos, zoomLens, zoomTopPos;
         zoomLens = document.getElementById("zoomLens360");
-        largeUrl = cfg.zoomURLs[floatPart(currentAngle / Math.PI / 2) * cfg.zoomURLs.length | 0];
+        if (zoomSrc === void 0) {
+          normalSrc = cfg.imageURLs[floatPart(currentAngle / Math.PI / 2) * cfg.zoomURLs.length | 0];
+          largeSrc = cfg.zoomURLs[floatPart(currentAngle / Math.PI / 2) * cfg.zoomURLs.length | 0];
+          zoomSrc = normalSrc;
+          loadZoom = new Image;
+          loadZoom.onload = function() {
+            if (zoomSrc === normalSrc) {
+              zoomSrc = largeSrc;
+              return doZoom(t);
+            }
+          };
+          loadZoom.src = largeSrc;
+        }
         imgPos = img.getBoundingClientRect();
         minY = imgPos.top;
         maxY = imgPos.bottom;
@@ -543,12 +556,14 @@
           position: "absolute",
           left: zoomLeftPos + "px",
           top: zoomTopPos + "px",
-          backgroundImage: "url(" + largeUrl + ")",
+          backgroundImage: "url(" + zoomSrc + ")",
+          backgroundSize: "" + zoomWidth + "px " + zoomHeight + "px",
           backgroundPosition: "" + bgLeft + "px " + bgTop + "px",
           backgroundRepeat: "no-repeat"
         });
       };
       endZoom = function(t) {
+        zoomSrc = void 0;
         img.style.cursor = "url(res/cursor_rotate.cur),move";
         (document.getElementById("zoomLens360")).style.display = "none";
         return recache();

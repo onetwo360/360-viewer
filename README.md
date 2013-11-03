@@ -26,15 +26,15 @@
 
 ### Initial version
 
+- dynamic load hi-res images (on fullscreen after 2s same image + zoom use scaled lo-res when starting) + recache lo-res
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
-- labels/markers/interaction points
-- customer logo
-- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
 - IE - test
 
 ### Future
 
-- dynamic load hi-res images (on fullscreen after 2s same image + zoom use scaled lo-res when starting) + recache lo-res
+- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
+- customer logo(postponed due to no customer logo links in sample data from the api)
+- labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
 - fullscreen issues on android when user-scaleable
 - maybe close fullscreen on click outside image
 - test/make sure it works also wit small data sets of 1. picture

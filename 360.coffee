@@ -342,14 +342,23 @@ do ->
         nextTick -> setTouch t
 
     # Zoom handling {{{3
+    zoomSrc = undefined
     doZoom = (t) ->
       zoomLens = document.getElementById "zoomLens360"
-      largeUrl = cfg.zoomURLs[floatPart(currentAngle/Math.PI/2) * cfg.zoomURLs.length | 0]
+      if zoomSrc == undefined
+        normalSrc = cfg.imageURLs[floatPart(currentAngle/Math.PI/2) * cfg.zoomURLs.length | 0]
+        largeSrc = cfg.zoomURLs[floatPart(currentAngle/Math.PI/2) * cfg.zoomURLs.length | 0]
+        zoomSrc = normalSrc
+        loadZoom = new Image
+        loadZoom.onload = -> if zoomSrc == normalSrc
+          zoomSrc = largeSrc
+          doZoom t
+        loadZoom.src = largeSrc
       imgPos = img.getBoundingClientRect()
-      minY = imgPos.top # + .5 * zoomSize
-      maxY = imgPos.bottom #- .5 * zoomSize
-      minX = imgPos.left #+ .5 * zoomSize
-      maxX = imgPos.right #- .5 * zoomSize
+      minY = imgPos.top
+      maxY = imgPos.bottom
+      minX = imgPos.left
+      maxX = imgPos.right
       imgWidth = maxX - minX
       imgHeight = maxY - minY
       touchX = .5
@@ -365,12 +374,16 @@ do ->
         position: "absolute"
         left: zoomLeftPos + "px"
         top: zoomTopPos + "px"
-        backgroundImage: "url(#{largeUrl})"
+        backgroundImage: "url(#{zoomSrc})"
+        backgroundSize: "#{zoomWidth}px #{zoomHeight}px"
         backgroundPosition: "#{bgLeft}px #{bgTop}px"
         backgroundRepeat: "no-repeat"
       #img.style.cursor = "crosshair" # cannot reset cursor style, as it will mess up zoom lens on iOS
 
+
+
     endZoom = (t) ->
+      zoomSrc = undefined
       img.style.cursor = "url(res/cursor_rotate.cur),move"
       (document.getElementById "zoomLens360").style.display = "none"
       recache()
