@@ -441,3 +441,11 @@ do ->
           elem.style.zoom = scaleFactor
       updateImage()
       false
+# {{{1 experiments
+sleep 1, ->
+  blah = document.createElement "div"
+  document.body.appendChild blah
+  blah.innerHTML = Date.now()
+  setInterval (->
+    blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
+  ), 1000

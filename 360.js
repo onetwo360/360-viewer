@@ -637,4 +637,14 @@
     };
   })();
 
+  sleep(1, function() {
+    var blah;
+    blah = document.createElement("div");
+    document.body.appendChild(blah);
+    blah.innerHTML = Date.now();
+    return setInterval((function() {
+      return blah.innerHTML = "" + window.innerHeight + " " + window.innerWidth + " " + body.scrollTop + " " + body.scrollLeft;
+    }), 1000);
+  });
+
 }).call(this);

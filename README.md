@@ -27,12 +27,13 @@
 
 ### Initial version
 
+- fix android full-screen issues
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
 - IE - test
 
 ### Future
 
-- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
+- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
 - customer logo(postponed due to no customer logo links in sample data from the api)
 - labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
 - fullscreen issues on android when user-scaleable
