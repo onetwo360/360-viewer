@@ -258,10 +258,11 @@ do ->
     nextTick -> get360Config()
 
 
-    # Get config+imagelist from server (DUMMY IMPLEMENTATION) {{{3
+    # Get config+imagelist from server {{{3
     get360Config = ->
       callbackName = "callback" # TODO: random
       window[callbackName] = (data) ->
+        console.log data
         serverConfig =
           imageURLs: (data.baseUrl + file.normal for file in data.files)
           zoomURLs: (data.baseUrl + file.zoom for file in data.files)
@@ -272,6 +273,11 @@ do ->
         cfg = extend {}, default360Config, serverConfig, cfg
         init360Elem()
         scriptTag.remove()
+        setStyle elem,
+          display: "inline-block"
+          width: data.width + "px"
+          height: data.height + "px"
+          overflow: "hidden"
         setStyle container,
           width: data.width + "px"
           height: data.height + "px"
@@ -393,14 +399,12 @@ do ->
           webkitTransformOrigin: style.webkitTransformOrigin
           margin: style.margin
           padding: style.padding
-          background: style.background
         scaleStr = "scale(#{scaleFactor}, #{scaleFactor})"
         widthPad = ((window.innerWidth  / (scaleFactor * width)) - 1)/2 * width
         heightPad = ((window.innerHeight  / (scaleFactor * width)) - 1)/2 * width
         setStyle elem,
           margin: "0"
           padding: "#{heightPad}px #{widthPad}px #{heightPad}px #{widthPad}px"
-          background: "blue"
           position: "fixed"
           top: "0px"
           left: "0px"

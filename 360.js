@@ -400,6 +400,7 @@
         callbackName = "callback";
         window[callbackName] = function(data) {
           var file, serverConfig;
+          console.log(data);
           serverConfig = {
             imageURLs: (function() {
               var _i, _len, _ref, _results;
@@ -429,6 +430,12 @@
           cfg = extend({}, default360Config, serverConfig, cfg);
           init360Elem();
           scriptTag.remove();
+          setStyle(elem, {
+            display: "inline-block",
+            width: data.width + "px",
+            height: data.height + "px",
+            overflow: "hidden"
+          });
           setStyle(container, {
             width: data.width + "px",
             height: data.height + "px"
@@ -567,8 +574,7 @@
             transformOrigin: style.transformOrigin,
             webkitTransformOrigin: style.webkitTransformOrigin,
             margin: style.margin,
-            padding: style.padding,
-            background: style.background
+            padding: style.padding
           };
           scaleStr = "scale(" + scaleFactor + ", " + scaleFactor + ")";
           widthPad = ((window.innerWidth / (scaleFactor * width)) - 1) / 2 * width;
@@ -576,7 +582,6 @@
           setStyle(elem, {
             margin: "0",
             padding: "" + heightPad + "px " + widthPad + "px " + heightPad + "px " + widthPad + "px",
-            background: "blue",
             position: "fixed",
             top: "0px",
             left: "0px"
