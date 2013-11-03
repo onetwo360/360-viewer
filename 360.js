@@ -612,7 +612,7 @@
           };
           scaleStr = "scale(" + scaleFactor + ", " + scaleFactor + ")";
           widthPad = ((window.innerWidth / (scaleFactor * width)) - 1) / 2 * width;
-          heightPad = ((window.innerHeight / (scaleFactor * width)) - 1) / 2 * width;
+          heightPad = ((window.innerHeight / (scaleFactor * height)) - 1) / 2 * height;
           setStyle(elem, {
             margin: "0",
             padding: "" + heightPad + "px " + widthPad + "px " + heightPad + "px " + widthPad + "px",

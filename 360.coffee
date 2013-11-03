@@ -157,7 +157,7 @@ do ->
   zoomSize = 200
   eventHandler = undefined
   untouched = true
-  default360Config = #{{{3
+  default360Config = #{{{2
     autorotate: true
     imageURLs: undefined
 
@@ -424,7 +424,7 @@ do ->
           padding: style.padding
         scaleStr = "scale(#{scaleFactor}, #{scaleFactor})"
         widthPad = ((window.innerWidth  / (scaleFactor * width)) - 1)/2 * width
-        heightPad = ((window.innerHeight  / (scaleFactor * width)) - 1)/2 * width
+        heightPad = ((window.innerHeight  / (scaleFactor * height)) - 1)/2 * height
         setStyle elem,
           margin: "0"
           padding: "#{heightPad}px #{widthPad}px #{heightPad}px #{widthPad}px"
