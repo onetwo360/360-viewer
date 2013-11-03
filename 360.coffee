@@ -344,14 +344,16 @@ do ->
       maxY = imgPos.bottom #- .5 * zoomSize
       minX = imgPos.left #+ .5 * zoomSize
       maxX = imgPos.right #- .5 * zoomSize
+      imgWidth = maxX - minX
+      imgHeight = maxY - minY
       touchX = .5
       touchY = if t.isMouse then .5 else 1.1
       y = Math.min(maxY, Math.max(minY, t.y))
       x = Math.min(maxX, Math.max(minX, t.x))
       zoomLeftPos = x + body.scrollLeft - zoomSize * touchX
       zoomTopPos = y + body.scrollTop - zoomSize * touchY
-      bgLeft = zoomSize*touchX-((x-imgPos.left) * zoomWidth / (img.width))
-      bgTop = zoomSize*touchY-((y-imgPos.top) * zoomHeight / (img.height))
+      bgLeft = zoomSize*touchX-((x-imgPos.left) * zoomWidth / (imgWidth))
+      bgTop = zoomSize*touchY-((y-imgPos.top) * zoomHeight / (imgHeight))
       setStyle zoomLens,
         display: "block"
         position: "absolute"
@@ -387,17 +389,14 @@ do ->
           zoom: style.zoom
           transform: style.transform
           webkitTransform: style.webkitTransform
-          msTransform: style.msTransform
           transformOrigin: style.transformOrigin
           webkitTransformOrigin: style.webkitTransformOrigin
-          msTransformOrigin: style.msTransformOrigin
           margin: style.margin
           padding: style.padding
           background: style.background
         scaleStr = "scale(#{scaleFactor}, #{scaleFactor})"
         widthPad = ((window.innerWidth  / (scaleFactor * width)) - 1)/2 * width
         heightPad = ((window.innerHeight  / (scaleFactor * width)) - 1)/2 * width
-        console.log heightPad, widthPad
         setStyle elem,
           margin: "0"
           padding: "#{heightPad}px #{widthPad}px #{heightPad}px #{widthPad}px"
@@ -405,13 +404,12 @@ do ->
           position: "fixed"
           top: "0px"
           left: "0px"
-          zoom: scaleFactor
-          transform: scaleStr
-          webkitTransform: scaleStr
-          msTransform: scaleStr
-          transformOrigin: "0 0"
-          webkitTransformOrigin: "0 0"
-          msTransformOrigin: "0 0"
-      console.log width, height
-      console.log scaleFactor, elem.style.position, elem.style.top, elem.style.left
+        if style.transform == "" || style.webkitTransform == ""
+          setStyle elem,
+            transform: scaleStr
+            webkitTransform: scaleStr
+            transformOrigin: "0 0"
+            webkitTransformOrigin: "0 0"
+        else
+          elem.style.zoom = scaleFactor
       false

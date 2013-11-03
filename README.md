@@ -27,8 +27,6 @@
 ### Initial version
 
 - connect with API (implemented with local version, waiting for proper jsonp on backend)
-- zoom when fullscreen
-- fullscreen issues on ie8 and android-user-scale
 - labels/markers/interaction points
 - customer logo
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger
@@ -36,6 +34,9 @@
 
 ### Future
 
+- dynamic load hi-res images (on fullscreen after 2s same image + zoom use scaled lo-res when starting) + recache lo-res
+- fullscreen issues on android when user-scaleable
+- maybe close fullscreen on click outside image
 - test/make sure it works also wit small data sets of 1. picture
 - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 - animate during load, instead of animate on load

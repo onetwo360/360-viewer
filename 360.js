@@ -513,7 +513,7 @@
         };
       };
       doZoom = function(t) {
-        var bgLeft, bgTop, imgPos, largeUrl, maxX, maxY, minX, minY, touchX, touchY, x, y, zoomLeftPos, zoomLens, zoomTopPos;
+        var bgLeft, bgTop, imgHeight, imgPos, imgWidth, largeUrl, maxX, maxY, minX, minY, touchX, touchY, x, y, zoomLeftPos, zoomLens, zoomTopPos;
         zoomLens = document.getElementById("zoomLens360");
         largeUrl = cfg.zoomURLs[floatPart(currentAngle / Math.PI / 2) * cfg.zoomURLs.length | 0];
         imgPos = img.getBoundingClientRect();
@@ -521,14 +521,16 @@
         maxY = imgPos.bottom;
         minX = imgPos.left;
         maxX = imgPos.right;
+        imgWidth = maxX - minX;
+        imgHeight = maxY - minY;
         touchX = .5;
         touchY = t.isMouse ? .5 : 1.1;
         y = Math.min(maxY, Math.max(minY, t.y));
         x = Math.min(maxX, Math.max(minX, t.x));
         zoomLeftPos = x + body.scrollLeft - zoomSize * touchX;
         zoomTopPos = y + body.scrollTop - zoomSize * touchY;
-        bgLeft = zoomSize * touchX - ((x - imgPos.left) * zoomWidth / img.width);
-        bgTop = zoomSize * touchY - ((y - imgPos.top) * zoomHeight / img.height);
+        bgLeft = zoomSize * touchX - ((x - imgPos.left) * zoomWidth / imgWidth);
+        bgTop = zoomSize * touchY - ((y - imgPos.top) * zoomHeight / imgHeight);
         return setStyle(zoomLens, {
           display: "block",
           position: "absolute",
@@ -562,10 +564,8 @@
             zoom: style.zoom,
             transform: style.transform,
             webkitTransform: style.webkitTransform,
-            msTransform: style.msTransform,
             transformOrigin: style.transformOrigin,
             webkitTransformOrigin: style.webkitTransformOrigin,
-            msTransformOrigin: style.msTransformOrigin,
             margin: style.margin,
             padding: style.padding,
             background: style.background
@@ -573,25 +573,25 @@
           scaleStr = "scale(" + scaleFactor + ", " + scaleFactor + ")";
           widthPad = ((window.innerWidth / (scaleFactor * width)) - 1) / 2 * width;
           heightPad = ((window.innerHeight / (scaleFactor * width)) - 1) / 2 * width;
-          console.log(heightPad, widthPad);
           setStyle(elem, {
             margin: "0",
             padding: "" + heightPad + "px " + widthPad + "px " + heightPad + "px " + widthPad + "px",
             background: "blue",
             position: "fixed",
             top: "0px",
-            left: "0px",
-            zoom: scaleFactor,
-            transform: scaleStr,
-            webkitTransform: scaleStr,
-            msTransform: scaleStr,
-            transformOrigin: "0 0",
-            webkitTransformOrigin: "0 0",
-            msTransformOrigin: "0 0"
+            left: "0px"
           });
+          if (style.transform === "" || style.webkitTransform === "") {
+            setStyle(elem, {
+              transform: scaleStr,
+              webkitTransform: scaleStr,
+              transformOrigin: "0 0",
+              webkitTransformOrigin: "0 0"
+            });
+          } else {
+            elem.style.zoom = scaleFactor;
+          }
         }
-        console.log(width, height);
-        console.log(scaleFactor, elem.style.position, elem.style.top, elem.style.left);
         return false;
       };
     };
