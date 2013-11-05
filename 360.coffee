@@ -152,6 +152,7 @@ do ->
 
 # 360º specific (proprietary) {{{1
 do ->
+  callbackNo = 0
   zoomWidth = undefined
   zoomHeight = undefined
   zoomSize = 200
@@ -260,7 +261,7 @@ do ->
 
     # Get config+imagelist from server {{{3
     get360Config = ->
-      callbackName = "callback" # TODO: random
+      callbackName = "callback" + ++callbackNo
       window[callbackName] = (data) ->
         console.log data
         serverConfig =
@@ -283,8 +284,7 @@ do ->
           height: data.height + "px"
         delete window[callbackName]
       scriptTag = document.createElement "script"
-      # TODO: replace "" with "http://embed.onetwo360.com/"
-      scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName
+      scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName
       document.getElementsByTagName("head")[0].appendChild scriptTag
   
     # Initialise the 360º object {{{3

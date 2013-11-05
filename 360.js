@@ -285,7 +285,8 @@
   })();
 
   (function() {
-    var default360Config, eventHandler, untouched, zoomHeight, zoomSize, zoomWidth;
+    var callbackNo, default360Config, eventHandler, untouched, zoomHeight, zoomSize, zoomWidth;
+    callbackNo = 0;
     zoomWidth = void 0;
     zoomHeight = void 0;
     zoomSize = 200;
@@ -400,7 +401,7 @@
       });
       get360Config = function() {
         var callbackName, scriptTag;
-        callbackName = "callback";
+        callbackName = "callback" + ++callbackNo;
         window[callbackName] = function(data) {
           var file, serverConfig;
           console.log(data);
@@ -446,7 +447,7 @@
           return delete window[callbackName];
         };
         scriptTag = document.createElement("script");
-        scriptTag.src = "" + cfg.product_id + "?callback=" + callbackName;
+        scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName;
         return document.getElementsByTagName("head")[0].appendChild(scriptTag);
       };
       init360Elem = function() {
