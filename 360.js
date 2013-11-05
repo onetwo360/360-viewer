@@ -613,7 +613,7 @@
           };
           scaleStr = "scale(" + scaleFactor + ", " + scaleFactor + ")";
           widthPad = ((window.innerWidth / (scaleFactor * width)) - 1) / 2 * width;
-          heightPad = ((window.innerHeight / (scaleFactor * width)) - 1) / 2 * width;
+          heightPad = ((window.innerHeight / (scaleFactor * height)) - 1) / 2 * height;
           setStyle(elem, {
             margin: "0",
             padding: "" + heightPad + "px " + widthPad + "px " + heightPad + "px " + widthPad + "px",
@@ -637,5 +637,15 @@
       };
     };
   })();
+
+  sleep(1, function() {
+    var blah;
+    blah = document.createElement("div");
+    document.body.appendChild(blah);
+    blah.innerHTML = Date.now();
+    return setInterval((function() {
+      return blah.innerHTML = "" + window.innerHeight + " " + window.innerWidth + " " + body.scrollTop + " " + body.scrollLeft;
+    }), 1000);
+  });
 
 }).call(this);
