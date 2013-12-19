@@ -1,4 +1,4 @@
-### Util (open) {{{1 ###
+### Util {{{1 ###
 sleep = (time, fn) -> setTimeout fn, time*1000
 # General Utility functions {{{2
 floatPart = (n) -> n - Math.floor(n)
@@ -150,7 +150,7 @@ do ->
 
     handler
 
-# 360º specific (proprietary) {{{1
+# 360º specific {{{1
 do ->
   callbackNo = 0
   zoomWidth = undefined
