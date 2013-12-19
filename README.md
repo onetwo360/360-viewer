@@ -1,5 +1,15 @@
-# ![.](https://ssl.solsort.com/_solsort.png) 360º viewer component
+# ![.](https://ssl.solsort.com/_solsort_github_360.png) 360º viewer component
 ## Done
+
+### Milestone 1 - October/November 2013
+- avoid moving zoom-lens beyond image / constraint on edge
+- allow interaction during rotate
+- gif spinner indicator
+- logo on top with fade-out 
+- zoom button
+- fullscreen button
+- fullscreen(on both desktop and mobile)
+- dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
 
 ### Milestone 0 - September 2013
 
@@ -12,16 +22,6 @@
 - Cursor icon
 - Image caching / preloader
 - Animate on load
-
-### Milestone 1 - October/November 2013
-- avoid moving zoom-lens beyond image / constraint on edge
-- allow interaction during rotate
-- gif spinner indicator
-- logo on top with fade-out 
-- zoom button
-- fullscreen button
-- fullscreen(on both desktop and mobile)
-- dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
 
 ## TODO
 
