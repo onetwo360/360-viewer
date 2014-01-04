@@ -1,0 +1,29 @@
+{
+    "name": "360",
+    "version": "0.0.0",
+    "title": "360º Viewer",
+    "description": "Widget for showing OneTwo360 images/animations",
+    "owner": "onetwo360",
+    "html5": {
+        "userScaleable": true,
+        "css": [
+            "http://onetwo360.com/themes/onetwo360/site/360logofont.css",
+            "//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css"
+        ],
+        "files": []
+    },
+    "webjs": true,
+    "author": "Rasmus Erik Voel Jensen (solsort.com)",
+    "main": "360.js",
+    "scripts": {
+        "start": "node ./node_modules/solapp/solapp.js start",
+        "test": "node ./node_modules/solapp/solapp.js test"
+    },
+    "dependencies": {
+        "solapp": "*"
+    },
+    "repository": {
+        "type": "git",
+        "url": "http://github.com/onetwo360/360.git"
+    }
+}
