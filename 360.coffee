@@ -89,33 +89,9 @@ if isNodeJs
         "//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css"
       ]
     webjs: true
-
-#{{{2 development server/page 
-if isDevServer then do ->
-  sa = require "solapp"
-  exports.main = (solapp) ->
-    # actual htmlcontent, defined as json
-    solapp.setContent ["div"
-      ["center"
-          style:
-            width: 500
-            height: 500
-        ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
-    # invoke the threesixty component
-    onetwo360
-      elem_id: "threesixtyproduct"
-      product_id: "lukub2ip"
-      request_width: 600
-      request_height: 400
-
-  # {{{2 experiments
-  sa.sleep 1, ->
-    blah = document.createElement "div"
-    document.body.appendChild blah
-    blah.innerHTML = Date.now()
-    setInterval (->
-      blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
-    ), 1000
+    package:
+      dependencies:
+        solapp: "*"
 
 #{{{1 Utilities
 if !isNodeJs
@@ -565,3 +541,30 @@ if !isNodeJs
             elem.style.zoom = scaleFactor
         updateImage()
         false
+#{{{1 development server/page 
+if isDevServer then do ->
+  sa = require "solapp"
+  exports.main = (solapp) ->
+    # actual htmlcontent, defined as json
+    solapp.setContent ["div"
+      ["center"
+          style:
+            width: 500
+            height: 500
+        ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
+    # invoke the threesixty component
+    onetwo360
+      elem_id: "threesixtyproduct"
+      product_id: "lukub2ip"
+      request_width: 600
+      request_height: 400
+
+  # {{{2 experiments
+  sleep 1, ->
+    blah = document.createElement "div"
+    document.body.appendChild blah
+    blah.innerHTML = Date.now()
+    setInterval (->
+      blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
+    ), 1000
+
