@@ -3,18 +3,20 @@
 
 Widget for showing OneTwo360 images/animations
 
-# Roadmap
-## Done
+# Documentation
+## Roadmap
+### Done
 
-### Milestone 2 - December 2013 / January 2014
+#### Milestone 2 - December 2013 / January 2014
 
 - open source - available on github
 - use solapp for automatic minification and easier development
 
-### Milestone 1 - October/November 2013
+#### Milestone 1 - October/November 2013
 
 - avoid moving zoom-lens beyond image / constraint on edge
 - allow interaction during rotate
+- connect with API
 - gif spinner indicator
 - logo on top with fade-out 
 - zoom button
@@ -22,7 +24,7 @@ Widget for showing OneTwo360 images/animations
 - fullscreen(on both desktop and mobile)
 - dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
 
-### Milestone 0 - September 2013
+#### Milestone 0 - September 2013
 
 - Version up and running
 - Browser-support: IE8+, iOS 5+ Android 4+
@@ -34,15 +36,15 @@ Widget for showing OneTwo360 images/animations
 - Image caching / preloader
 - Animate on load
 
-## TODO
-### Initial version
+### TODO
+#### Initial version
 
+- refactor
 - collect statistics
 - fix android full-screen issues
-- connect with API (implemented with local version, waiting for proper jsonp on backend)
 - IE - test
 
-### Future
+#### Future
 
 - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
 - customer logo(postponed due to no customer logo links in sample data from the api)
@@ -56,7 +58,7 @@ Widget for showing OneTwo360 images/animations
 - smoother animate on load
 
 
-# Technical approach
+## Technical approach
 
 When targeting mobile devices,
 and possibly several 360º views on a page,
@@ -71,7 +73,8 @@ the `src` of an image tag, - also making it work
 in non-HTML5 browsers, such as IE8, 
 which we also need to support.
 
-# Development code
+# Literate source code
+## Development code
 
 The following code is used during development.
 It will automatically be removed when it is compiled and minified.
@@ -81,7 +84,7 @@ The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates whic
     require("solapp").globalDefines global if typeof isNodeJs != "boolean"
     
 
-## Meta information about the application
+### Meta information about the application
 This is primarily used for the README.md and to make sure necessary css are included when the devserver is running, and also that the minified version `webjs` is build.
 
     if isNodeJs
@@ -102,11 +105,61 @@ This is primarily used for the README.md and to make sure necessary css are incl
             solapp: "*"
     
 
-# Utilities
+### Test/experiment
+
+    if isDevServer and !isNodeJs then do ->
+      sa = require "solapp"
+      exports.main = (solapp) ->
+
+actual htmlcontent, defined as json
+
+        solapp.setContent ["div"
+          ["center"
+              style:
+                width: 500
+                height: 500
+            ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
+
+invoke the threesixty component
+
+        onetwo360
+          elem_id: "threesixtyproduct"
+          product_id: "lukub2ip"
+          request_width: 600
+          request_height: 400
+    
+      setTimeout (->
+        blah = document.createElement "div"
+        document.body.appendChild blah
+        blah.innerHTML = Date.now()
+        setInterval (->
+          blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
+        ), 1000
+    
+        sleep 3, ->
+          njn()
+      ), 0
+    
+    if isNodeJs then do ->
+      exports.devServerMain = (app) ->
+        app.use "/logger", (req, res, next) ->
+          data = ""
+          req.on "data", (d) -> data += d
+          req.on "end", ->
+            res.header 'Access-Control-Allow-Origin', "*"
+            res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
+            res.header 'Access-Control-Allow-Headers', 'Content-Type'
+            console.log data
+            res.json {ok:true}
+            res.end()
+    
+    
+
+## Utilities
 
     if !isNodeJs
 
-## General Utility functions
+### General Utility functions
 
       sleep = (time, fn) -> setTimeout fn, time*1000
       floatPart = (n) -> n - Math.floor(n)
@@ -114,12 +167,12 @@ This is primarily used for the README.md and to make sure necessary css are incl
       identityFn = (e) -> e
       nop = -> undefined
       runOnce = (fn) -> (args...) -> if fn then fn args...; fn = undefined else undefined
-      extend = (target, sources...) -> #{{{3
+      extend = (target, sources...) -> #{{{4
         for source in sources
           for key, val of source
             target[key] = val
         target
-      asyncEach = (arr, fn, done) -> #{{{3
+      asyncEach = (arr, fn, done) -> #{{{4
         done = runOnce done
         remaining = arr.length
         next = (err) ->
@@ -129,7 +182,7 @@ This is primarily used for the README.md and to make sure necessary css are incl
         undefined
       
 
-## Browser abstractions and utilities
+### Browser abstractions and utilities
 
 Added here, because of requirement of no dependencies, - would otherwise use jquery or similar
 
@@ -137,36 +190,55 @@ Added here, because of requirement of no dependencies, - would otherwise use jqu
       Date.now ?= -> (+ new Date())
       body = document.getElementsByTagName("body")[0] # TODO: make sure this runs after onload
       onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10
-      setStyle = (elem, obj) -> #{{{3
+      setStyle = (elem, obj) -> #{{{4
         for key, val of obj
           try
             elem.style[key] = val
           catch e
             e
         elem
-      elemAddEventListener = (elem, type, fn) -> #{{{3
+      elemAddEventListener = (elem, type, fn) -> #{{{4
         if elem.addEventListener
           elem.addEventListener type, fn, false
         else
           elem.attachEvent "on"+type, fn
-      get = (url, callback) -> #{{{3
-        req = new XMLHttpRequest() #TODO IE-compat
-        req.onload = ->
-          callback null, req.responseText
-        req.open "get", url, true
-        req.send()
       
 
-## Web utilities
+#### CORS `post` request to send data to the server
 
-      cacheImgs = (urls, callback) -> #{{{3
+used for logging
+
+      post = (url, data, asyncCallback) ->
+        xhr = new XMLHttpRequest()
+    
+        xhr.open "POST", url, !! asyncCallback
+    
+
+Haven't done IE8/9 compat yet, but when we do
+only text/plain is possible, due to bug in that
+implementation (and it is XDomainRequest, instead of xhr)
+
+        xhr.setRequestHeader "Content-type", "text/plain"
+    
+        if !! asyncCallback
+          xhr.onreadystatechange = ->
+            if xhr.readyState == 4
+              asyncCallback (if xhr.status == 200 then null else xhr.status), xhr.responseText
+    
+        xhr.send data
+        return xhr.responseText
+    
+
+### Web utilities
+
+      cacheImgs = (urls, callback) -> #{{{4
         loadImg = (url, done) ->
           img = new Image()
           img.src = url
           img.onload = -> done()
         asyncEach urls, loadImg, callback
 
-### maximize
+#### maximize
 
 implementation disable at the moment, as we have another approach
 
@@ -192,7 +264,68 @@ implementation disable at the moment, as we have another approach
               parent.appendChild elem
         
 
-## Touch handler
+### logging
+
+url for api, where log is pushed
+
+      logurl = "/logger"
+    
+
+how many seconds between each log push
+
+      logfrequency = 10
+    
+
+actual implementation
+
+      log = do ->
+    
+
+session stamp random number
+
+        logsession = String(Math.random()).slice(2)
+    
+        scheduled = false
+        logContent = "#{Date.now()} #{logsession}\n"
+        schedule = ->
+          return if scheduled
+          scheduled = true
+          sleep logfrequency, ->
+            scheduled = false
+            data = logContent
+            logContent = "#{Date.now()} #{logsession}\n"
+            post logurl, data, (err, result) ->
+              if err
+                logContent = data + logContent
+                schedule()
+        elemAddEventListener window, "beforeunload", ->
+          log "beforeunload"
+          try
+            post logurl, logContent
+          catch e
+            undefined
+          return undefined
+    
+        elemAddEventListener window, "error", (err) ->
+          log "window.onerror", err?.message
+    
+        return (args...) ->
+          console.log args...
+          args = for arg in args
+            try
+              JSON.stringify arg
+            catch e
+              "[#{typeof arg}]"
+          logContent += "#{Date.now()} #{args.join " "}\n"
+          schedule()
+    
+      log "logging enabled", window.performance, window.screen, window.navigator?.userAgent
+    
+    
+    
+    
+
+### Touch handler
 
       touchHandler = undefined
       setTouch = undefined
@@ -203,7 +336,7 @@ implementation disable at the moment, as we have another approach
         tapLength = 500 # maximum time for a click, - turns into a hold after that
         tapDist2 = 10*10 # maximum dragged (squared) distance for a click
       
-        updateTouch = (touch, e) -> #{{{3
+        updateTouch = (touch, e) -> #{{{4
           x = e.clientX
           y = e.clientY
           touch.event = e
@@ -216,7 +349,7 @@ implementation disable at the moment, as we have another approach
           touch.x = x
           touch.y = y
       
-        startTouch = (e, handler, touchObj) -> #{{{3
+        startTouch = (e, handler, touchObj) -> #{{{4
           touch = touchObj
           touch.handler = handler
           touch.x0 = e.clientX
@@ -232,27 +365,27 @@ implementation disable at the moment, as we have another approach
               touch.handler.hold touch
           setTimeout holdHandler, tapLength
       
-        moveTouch = (e) -> #{{{3
+        moveTouch = (e) -> #{{{4
           updateTouch touch, e
           touch.ctx = touch.handler.move touch || touch.ctx
       
-        stopTouch = (e) -> #{{{3
+        stopTouch = (e) -> #{{{4
           touch.handler.end touch
           touch.handler.click touch if touch.maxDist2 < tapDist2 && touch.time < tapLength
           touch = undefined
       
-        condCall = (fn) -> (e) -> #{{{3
+        condCall = (fn) -> (e) -> #{{{4
           return undefined if !touch
           e.preventDefault?()
           fn(e.touches?[0] || e)
       
-        documentTouch = runOnce -> #{{{3
+        documentTouch = runOnce -> #{{{4
           elemAddEventListener document, "mousemove", condCall moveTouch
           elemAddEventListener document, "touchmove", condCall moveTouch
           elemAddEventListener document, "mouseup", condCall stopTouch
           elemAddEventListener document, "touchend", condCall stopTouch
       
-        touchHandler = (handler) -> #{{{3
+        touchHandler = (handler) -> #{{{4
           elemAddEventListener handler.elem, "mousedown", (e) ->
             e.preventDefault?()
             startTouch e, handler, {isMouse: true}
@@ -271,7 +404,7 @@ implementation disable at the moment, as we have another approach
           handler
       
 
-# 360º specific
+## 360º specific
 
       do ->
         callbackNo = 0
@@ -280,12 +413,12 @@ implementation disable at the moment, as we have another approach
         zoomSize = 200
         eventHandler = undefined
         untouched = true
-        default360Config = #{{{2
+        default360Config = #{{{3
           autorotate: true
           imageURLs: undefined
       
 
-### Create zoom lens element
+#### Create zoom lens element
 
         onComplete ->
           body = document.getElementsByTagName("body")[0]
@@ -308,9 +441,10 @@ borderBottomRightRadius: (zoomSize/5) + "px"
           body.appendChild zoomLens
       
 
-### Add 360 elem to page
+#### Add 360 elem to page
 
         window.onetwo360 = (cfg) ->
+          log "onetwo360", cfg
       
           currentAngle = 0
           width = undefined
@@ -320,7 +454,7 @@ borderBottomRightRadius: (zoomSize/5) + "px"
           logoElem = undefined
       
 
-### Create img element for writing animation to
+#### Create img element for writing animation to
 
           elem = document.getElementById cfg.elem_id
           container = document.createElement "div"
@@ -390,12 +524,12 @@ borderBottomRightRadius: (zoomSize/5) + "px"
       
       
 
-### Get config+imagelist from server
+#### Get config+imagelist from server
 
           get360Config = ->
             callbackName = "callback" + ++callbackNo
             window[callbackName] = (data) ->
-              console.log data
+              log "data from embed.onetwo360.com:", data
               serverConfig =
                 imageURLs: (data.baseUrl + file.normal for file in data.files)
                 zoomURLs: (data.baseUrl + file.zoom for file in data.files)
@@ -420,7 +554,7 @@ borderBottomRightRadius: (zoomSize/5) + "px"
             document.getElementsByTagName("head")[0].appendChild scriptTag
         
 
-### Initialise the 360º object
+#### Initialise the 360º object
 
           init360Elem = ->
             cache360Images ->
@@ -437,12 +571,12 @@ borderBottomRightRadius: (zoomSize/5) + "px"
                 autorotate nop
         
 
-### Load images into cache, and possibly autorotate
+#### Load images into cache, and possibly autorotate
 
           cache360Images = (done) -> cacheImgs cfg.imageURLs, done
       
 
-### Autorotate
+#### Autorotate
 
           autorotate = (done) ->
             untouched = true
@@ -460,7 +594,7 @@ img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
             showNext()
         
 
-### Update the current viewed image
+#### Update the current viewed image
 
           updateImage = ->
             img.src = cfg.imageURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
@@ -476,7 +610,7 @@ img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
                 largeImage.src = cfg.zoomURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
       
 
-### init controls
+#### init controls
 
           init360Controls = ->
             eventHandler.move = (t) ->
@@ -496,7 +630,7 @@ img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
               nextTick -> setTouch t
       
 
-### Zoom handling
+#### Zoom handling
 
           zoomSrc = undefined
           doZoom = (t) ->
@@ -547,7 +681,7 @@ img.style.cursor = "crosshair" # cannot reset cursor style, as it will mess up z
             cache360Images nop
       
 
-### fullscreen
+#### fullscreen
 
           fullScreenOriginalState = undefined
           toggleFullScreen = (e)->
@@ -591,41 +725,6 @@ img.style.cursor = "crosshair" # cannot reset cursor style, as it will mess up z
                 elem.style.zoom = scaleFactor
             updateImage()
             false
-
-# development server/page
-
-    if isDevServer then do ->
-      sa = require "solapp"
-      exports.main = (solapp) ->
-
-actual htmlcontent, defined as json
-
-        solapp.setContent ["div"
-          ["center"
-              style:
-                width: 500
-                height: 500
-            ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
-
-invoke the threesixty component
-
-        onetwo360
-          elem_id: "threesixtyproduct"
-          product_id: "lukub2ip"
-          request_width: 600
-          request_height: 400
-    
-
-## experiments
-
-      sleep 1, ->
-        blah = document.createElement "div"
-        document.body.appendChild blah
-        blah.innerHTML = Date.now()
-        setInterval (->
-          blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
-        ), 1000
-    
     
 
 
