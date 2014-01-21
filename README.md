@@ -164,6 +164,7 @@ invoke the threesixty component
       sleep = (time, fn) -> setTimeout fn, time*1000
       floatPart = (n) -> n - Math.floor(n)
       nextTick = (fn) -> setTimeout fn, 0
+      window.requestAnimationFrame ?= window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || nextTick
       identityFn = (e) -> e
       nop = -> undefined
       runOnce = (fn) -> (args...) -> if fn then fn args...; fn = undefined else undefined
@@ -596,7 +597,7 @@ img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
 
 #### Update the current viewed image
 
-          updateImage = ->
+          updateImage = -> requestAnimationFrame ->
             img.src = cfg.imageURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
             imgsrc = img.src
             if fullScreenOriginalState

@@ -146,6 +146,7 @@ if !isNodeJs
   sleep = (time, fn) -> setTimeout fn, time*1000
   floatPart = (n) -> n - Math.floor(n)
   nextTick = (fn) -> setTimeout fn, 0
+  window.requestAnimationFrame ?= window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || nextTick
   identityFn = (e) -> e
   nop = -> undefined
   runOnce = (fn) -> (args...) -> if fn then fn args...; fn = undefined else undefined
@@ -536,7 +537,7 @@ if !isNodeJs
         showNext()
     
       # Update the current viewed image {{{4
-      updateImage = ->
+      updateImage = -> requestAnimationFrame ->
         img.src = cfg.imageURLs[floatPart(currentAngle/Math.PI/2) * cfg.imageURLs.length | 0]
         imgsrc = img.src
         if fullScreenOriginalState
