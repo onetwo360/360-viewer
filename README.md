@@ -9,6 +9,9 @@ Widget for showing OneTwo360 images/animations
 
 #### Milestone 2 - December 2013 / January 2014
 
+- log util, sending log to server
+- locally cached development data for easier development / automated testing
+- requestAnimationFrame for smoother animation
 - open source - available on github
 - use solapp for automatic minification and easier development
 
@@ -51,7 +54,7 @@ Widget for showing OneTwo360 images/animations
 - labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
 - fullscreen issues on android when user-scaleable
 - maybe close fullscreen on click outside image
-- test/make sure it works also wit small data sets of 1. picture
+- test/make sure it works also wit small data sets of 1 picture
 - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 - animate during load, instead of animate on load
 - thumbnails when few pictures (maybe instead of drag)
@@ -59,6 +62,8 @@ Widget for showing OneTwo360 images/animations
 
 
 ## Technical approach
+
+### Rendering
 
 When targeting mobile devices,
 and possibly several 360º views on a page,
@@ -74,87 +79,6 @@ in non-HTML5 browsers, such as IE8,
 which we also need to support.
 
 # Literate source code
-## Development code
-
-The following code is used during development.
-It will automatically be removed when it is compiled and minified.
-
-The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build.
-
-    require("solapp").globalDefines global if typeof isNodeJs != "boolean"
-    
-
-### Meta information about the application
-This is primarily used for the README.md and to make sure necessary css are included when the devserver is running, and also that the minified version `webjs` is build.
-
-    if isNodeJs
-      exports.about =
-        title: "360º Viewer"
-        description: "Widget for showing OneTwo360 images/animations"
-        owner: "onetwo360"
-        name: "360"
-        html5:
-          userScaleable: true
-          css: [
-            "http://onetwo360.com/themes/onetwo360/site/360logofont.css"
-            "//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css"
-          ]
-        webjs: true
-        package:
-          dependencies:
-            solapp: "*"
-    
-
-### Test/experiment
-
-    if isDevServer and !isNodeJs then do ->
-      sa = require "solapp"
-      exports.main = (solapp) ->
-
-actual htmlcontent, defined as json
-
-        solapp.setContent ["div"
-          ["center"
-              style:
-                width: 500
-                height: 500
-            ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
-
-invoke the threesixty component
-
-        onetwo360
-          elem_id: "threesixtyproduct"
-          product_id: "lukub2ip"
-          request_width: 600
-          request_height: 400
-    
-      setTimeout (->
-        blah = document.createElement "div"
-        document.body.appendChild blah
-        blah.innerHTML = Date.now()
-        setInterval (->
-          blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
-        ), 1000
-    
-        sleep 3, ->
-          njn()
-      ), 0
-    
-    if isNodeJs then do ->
-      exports.devServerMain = (app) ->
-        app.use "/logger", (req, res, next) ->
-          data = ""
-          req.on "data", (d) -> data += d
-          req.on "end", ->
-            res.header 'Access-Control-Allow-Origin', "*"
-            res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
-            res.header 'Access-Control-Allow-Headers', 'Content-Type'
-            console.log data
-            res.json {ok:true}
-            res.end()
-    
-    
-
 ## Utilities
 
     if !isNodeJs
@@ -265,7 +189,7 @@ implementation disable at the moment, as we have another approach
               parent.appendChild elem
         
 
-### logging
+### Logging
 
 url for api, where log is pushed
 
@@ -529,6 +453,7 @@ borderBottomRightRadius: (zoomSize/5) + "px"
 
           get360Config = ->
             callbackName = "callback" + ++callbackNo
+            callbackName = "callback" if isDevServer
             window[callbackName] = (data) ->
               log "data from embed.onetwo360.com:", data
               serverConfig =
@@ -552,6 +477,7 @@ borderBottomRightRadius: (zoomSize/5) + "px"
               delete window[callbackName]
             scriptTag = document.createElement "script"
             scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName
+            scriptTag.src = "/testdata/config.js" if isDevServer
             document.getElementsByTagName("head")[0].appendChild scriptTag
         
 
@@ -726,6 +652,98 @@ img.style.cursor = "crosshair" # cannot reset cursor style, as it will mess up z
                 elem.style.zoom = scaleFactor
             updateImage()
             false
+
+## Development code
+
+The following code is used during development.
+It will automatically be removed when it is compiled and minified.
+
+The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build.
+
+    require("solapp").globalDefines global if typeof isNodeJs != "boolean"
+    
+
+### Meta information about the application
+This is primarily used for the README.md and to make sure necessary css are included when the devserver is running, and also that the minified version `webjs` is build.
+
+    if isNodeJs
+      exports.about =
+        title: "360º Viewer"
+        description: "Widget for showing OneTwo360 images/animations"
+        owner: "onetwo360"
+        name: "360"
+        html5:
+          userScaleable: true
+          css: [
+            "http://onetwo360.com/themes/onetwo360/site/360logofont.css"
+            "//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css"
+          ]
+        webjs: true
+        package:
+          dependencies:
+            solapp: "*"
+    
+
+### Test/experiment
+
+    if isDevServer and !isNodeJs then do ->
+      sa = require "solapp"
+      exports.main = (solapp) ->
+
+actual htmlcontent, defined as json
+
+        solapp.setContent ["div"
+          ["center"
+              style:
+
+width: 500
+height: 500
+
+                width: 1000
+                height: 447
+            ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
+
+invoke the threesixty component
+
+        onetwo360
+          elem_id: "threesixtyproduct"
+          product_id: "lukub2ip"
+
+request_width: 600
+request_height: 400
+
+          request_width: 1000
+          request_height: 447
+    
+      setTimeout (->
+        blah = document.createElement "div"
+        document.body.appendChild blah
+        blah.innerHTML = Date.now()
+        setInterval (->
+          blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
+        ), 1000
+    
+        sleep 3, ->
+          njn()
+      ), 0
+    
+
+### REST server for logging
+
+    if isNodeJs then do ->
+      exports.devServerMain = (app) ->
+        app.use "/logger", (req, res, next) ->
+          data = ""
+          req.on "data", (d) -> data += d
+          req.on "end", ->
+            res.header 'Access-Control-Allow-Origin', "*"
+            res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
+            res.header 'Access-Control-Allow-Headers', 'Content-Type'
+            console.log data
+            res.json {ok:true}
+            res.end()
+    
+    
     
 
 

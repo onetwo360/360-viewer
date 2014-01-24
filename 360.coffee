@@ -5,6 +5,7 @@
 #{{{4 Milestone 2 - December 2013 / January 2014
 #
 # - log util, sending log to server
+# - locally cached development data for easier development / automated testing
 # - requestAnimationFrame for smoother animation
 # - open source - available on github
 # - use solapp for automatic minification and easier development
@@ -36,7 +37,6 @@
 #{{{3 TODO
 #{{{4 Initial version
 # 
-# - locally cached development data for easier development / automated testing
 # - refactor
 # - collect statistics
 # - fix android full-screen issues
