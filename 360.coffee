@@ -36,7 +36,7 @@
 #{{{3 TODO
 #{{{4 Initial version
 # 
-# - locally cached development data for easier development
+# - locally cached development data for easier development / automated testing
 # - refactor
 # - collect statistics
 # - fix android full-screen issues
@@ -413,6 +413,7 @@ if !isNodeJs
       # Get config+imagelist from server {{{4
       get360Config = ->
         callbackName = "callback" + ++callbackNo
+        callbackName = "callback" if isDevServer
         window[callbackName] = (data) ->
           log "data from embed.onetwo360.com:", data
           serverConfig =
@@ -436,6 +437,7 @@ if !isNodeJs
           delete window[callbackName]
         scriptTag = document.createElement "script"
         scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName
+        scriptTag.src = "/testdata/config.js" if isDevServer
         document.getElementsByTagName("head")[0].appendChild scriptTag
     
       # Initialise the 360º object {{{4
@@ -627,15 +629,19 @@ if isDevServer and !isNodeJs then do ->
     solapp.setContent ["div"
       ["center"
           style:
-            width: 500
-            height: 500
+            #width: 500
+            #height: 500
+            width: 1000
+            height: 447
         ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
     # invoke the threesixty component
     onetwo360
       elem_id: "threesixtyproduct"
       product_id: "lukub2ip"
-      request_width: 600
-      request_height: 400
+      #request_width: 600
+      #request_height: 400
+      request_width: 1000
+      request_height: 447
 
   setTimeout (->
     blah = document.createElement "div"
