@@ -74,78 +74,6 @@
 # which we also need to support.
 #
 #{{{1 Literate source code
-#{{{2 Development code
-#
-# The following code is used during development.
-# It will automatically be removed when it is compiled and minified.
-#
-# The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build.
-require("solapp").globalDefines global if typeof isNodeJs != "boolean"
-
-#{{{3 Meta information about the application 
-# This is primarily used for the README.md and to make sure necessary css are included when the devserver is running, and also that the minified version `webjs` is build.
-if isNodeJs
-  exports.about =
-    title: "360º Viewer"
-    description: "Widget for showing OneTwo360 images/animations"
-    owner: "onetwo360"
-    name: "360"
-    html5:
-      userScaleable: true
-      css: [
-        "http://onetwo360.com/themes/onetwo360/site/360logofont.css"
-        "//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css"
-      ]
-    webjs: true
-    package:
-      dependencies:
-        solapp: "*"
-
-#{{{3 Test/experiment
-if isDevServer and !isNodeJs then do ->
-  sa = require "solapp"
-  exports.main = (solapp) ->
-    # actual htmlcontent, defined as json
-    solapp.setContent ["div"
-      ["center"
-          style:
-            width: 500
-            height: 500
-        ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
-    # invoke the threesixty component
-    onetwo360
-      elem_id: "threesixtyproduct"
-      product_id: "lukub2ip"
-      request_width: 600
-      request_height: 400
-
-  setTimeout (->
-    blah = document.createElement "div"
-    document.body.appendChild blah
-    blah.innerHTML = Date.now()
-    setInterval (->
-      blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
-    ), 1000
-
-    sleep 3, ->
-      njn()
-  ), 0
-
-#{{{3 REST server for logging
-if isNodeJs then do ->
-  exports.devServerMain = (app) ->
-    app.use "/logger", (req, res, next) ->
-      data = ""
-      req.on "data", (d) -> data += d
-      req.on "end", ->
-        res.header 'Access-Control-Allow-Origin', "*"
-        res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
-        res.header 'Access-Control-Allow-Headers', 'Content-Type'
-        console.log data
-        res.json {ok:true}
-        res.end()
-
-
 #{{{2 Utilities
 if !isNodeJs
   # General Utility functions {{{3
@@ -664,3 +592,75 @@ if !isNodeJs
             elem.style.zoom = scaleFactor
         updateImage()
         false
+#{{{2 Development code
+#
+# The following code is used during development.
+# It will automatically be removed when it is compiled and minified.
+#
+# The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build.
+require("solapp").globalDefines global if typeof isNodeJs != "boolean"
+
+#{{{3 Meta information about the application 
+# This is primarily used for the README.md and to make sure necessary css are included when the devserver is running, and also that the minified version `webjs` is build.
+if isNodeJs
+  exports.about =
+    title: "360º Viewer"
+    description: "Widget for showing OneTwo360 images/animations"
+    owner: "onetwo360"
+    name: "360"
+    html5:
+      userScaleable: true
+      css: [
+        "http://onetwo360.com/themes/onetwo360/site/360logofont.css"
+        "//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css"
+      ]
+    webjs: true
+    package:
+      dependencies:
+        solapp: "*"
+
+#{{{3 Test/experiment
+if isDevServer and !isNodeJs then do ->
+  sa = require "solapp"
+  exports.main = (solapp) ->
+    # actual htmlcontent, defined as json
+    solapp.setContent ["div"
+      ["center"
+          style:
+            width: 500
+            height: 500
+        ["span#threesixtyproduct", {style: {background: "#ccc"}}]]]
+    # invoke the threesixty component
+    onetwo360
+      elem_id: "threesixtyproduct"
+      product_id: "lukub2ip"
+      request_width: 600
+      request_height: 400
+
+  setTimeout (->
+    blah = document.createElement "div"
+    document.body.appendChild blah
+    blah.innerHTML = Date.now()
+    setInterval (->
+      blah.innerHTML = "#{window.innerHeight} #{window.innerWidth} #{body.scrollTop} #{body.scrollLeft}"
+    ), 1000
+
+    sleep 3, ->
+      njn()
+  ), 0
+
+#{{{3 REST server for logging
+if isNodeJs then do ->
+  exports.devServerMain = (app) ->
+    app.use "/logger", (req, res, next) ->
+      data = ""
+      req.on "data", (d) -> data += d
+      req.on "end", ->
+        res.header 'Access-Control-Allow-Origin', "*"
+        res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
+        res.header 'Access-Control-Allow-Headers', 'Content-Type'
+        console.log data
+        res.json {ok:true}
+        res.end()
+
+
