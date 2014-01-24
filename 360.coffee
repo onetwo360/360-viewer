@@ -4,6 +4,8 @@
 # 
 #{{{4 Milestone 2 - December 2013 / January 2014
 #
+# - log util, sending log to server
+# - requestAnimationFrame for smoother animation
 # - open source - available on github
 # - use solapp for automatic minification and easier development
 #
@@ -34,6 +36,7 @@
 #{{{3 TODO
 #{{{4 Initial version
 # 
+# - locally cached development data for easier development
 # - refactor
 # - collect statistics
 # - fix android full-screen issues
@@ -46,7 +49,7 @@
 # - labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
 # - fullscreen issues on android when user-scaleable
 # - maybe close fullscreen on click outside image
-# - test/make sure it works also wit small data sets of 1. picture
+# - test/make sure it works also wit small data sets of 1 picture
 # - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 # - animate during load, instead of animate on load
 # - thumbnails when few pictures (maybe instead of drag)
@@ -54,6 +57,8 @@
 # 
 # 
 #{{{2 Technical approach
+#
+#{{{3 Rendering
 #
 # When targeting mobile devices,
 # and possibly several 360º views on a page,
@@ -126,6 +131,7 @@ if isDevServer and !isNodeJs then do ->
       njn()
   ), 0
 
+#{{{3 REST server for logging
 if isNodeJs then do ->
   exports.devServerMain = (app) ->
     app.use "/logger", (req, res, next) ->
@@ -236,7 +242,7 @@ if !isNodeJs
         else
           parent.appendChild elem
     
-  #{{{3 logging
+  #{{{3 Logging
   #
   # url for api, where log is pushed
   logurl = "/logger"
