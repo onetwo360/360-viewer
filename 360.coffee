@@ -187,7 +187,7 @@ if !isNodeJs
   logurl = "/logger"
 
   # how many seconds between each log push
-  logfrequency = 10
+  logfrequency = 1
 
   # actual implementation
   log = do ->
@@ -263,6 +263,7 @@ if !isNodeJs
       touch.y0 = e.clientY
       touch.x = e.clientX
       touch.y = e.clientY
+      log "startTouch", touch.x, touch.y
       touch.startTime = Date.now()
       updateTouch touch, e
       touch.ctx = handler.start(touch)
@@ -274,9 +275,11 @@ if !isNodeJs
   
     moveTouch = (e) -> #{{{4
       updateTouch touch, e
+      log "moveTouch", touch.x, touch.y
       touch.ctx = touch.handler.move touch || touch.ctx
   
     stopTouch = (e) -> #{{{4
+      log "stopTouch"
       touch.handler.end touch
       touch.handler.click touch if touch.maxDist2 < tapDist2 && touch.time < tapLength
       touch = undefined
@@ -493,7 +496,6 @@ if !isNodeJs
           sleep .5, ->
             largeImage = new Image
             largeImage.onload = ->
-              console.log "here", imgsrc, img.src
               if imgsrc == img.src
                 img.src = largeImage.src
               cache360Images nop
@@ -514,6 +516,7 @@ if !isNodeJs
           untouched = false
         eventHandler.end = (t) -> nextTick -> endZoom t
         eventHandler.click = (t) -> if t.isMouse
+          log "click"
           t.zoom360 = true
           nextTick -> setTouch t
   

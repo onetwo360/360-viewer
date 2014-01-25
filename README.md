@@ -213,7 +213,7 @@ url for api, where log is pushed
 
 how many seconds between each log push
 
-      logfrequency = 10
+      logfrequency = 1
     
 
 actual implementation
@@ -295,6 +295,7 @@ session stamp random number
           touch.y0 = e.clientY
           touch.x = e.clientX
           touch.y = e.clientY
+          log "startTouch", touch.x, touch.y
           touch.startTime = Date.now()
           updateTouch touch, e
           touch.ctx = handler.start(touch)
@@ -306,9 +307,11 @@ session stamp random number
       
         moveTouch = (e) -> #{{{4
           updateTouch touch, e
+          log "moveTouch", touch.x, touch.y
           touch.ctx = touch.handler.move touch || touch.ctx
       
         stopTouch = (e) -> #{{{4
+          log "stopTouch"
           touch.handler.end touch
           touch.handler.click touch if touch.maxDist2 < tapDist2 && touch.time < tapLength
           touch = undefined
@@ -547,7 +550,6 @@ img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
               sleep .5, ->
                 largeImage = new Image
                 largeImage.onload = ->
-                  console.log "here", imgsrc, img.src
                   if imgsrc == img.src
                     img.src = largeImage.src
                   cache360Images nop
@@ -570,6 +572,7 @@ img.onload = -> setTimeout showNext, 10 # doesnt work in ie8
               untouched = false
             eventHandler.end = (t) -> nextTick -> endZoom t
             eventHandler.click = (t) -> if t.isMouse
+              log "click"
               t.zoom360 = true
               nextTick -> setTouch t
       

@@ -68,7 +68,7 @@
                 return done();
             };
         }, asyncEach(urls, loadImg, callback);
-    }, logurl = "/logger", logfrequency = 10, log = function() {
+    }, logurl = "/logger", logfrequency = 1, log = function() {
         var logContent, logsession, schedule, scheduled;
         return logsession = String(Math.random()).slice(2), scheduled = !1, logContent = "" + Date.now() + " " + logsession + "\n", 
         schedule = function() {
@@ -120,15 +120,15 @@
         }, startTouch = function(e, handler, touchObj) {
             var holdHandler;
             return touch = touchObj, touch.handler = handler, touch.x0 = e.clientX, touch.y0 = e.clientY, 
-            touch.x = e.clientX, touch.y = e.clientY, touch.startTime = Date.now(), updateTouch(touch, e), 
-            touch.ctx = handler.start(touch), holdHandler = function() {
+            touch.x = e.clientX, touch.y = e.clientY, log("startTouch", touch.x, touch.y), touch.startTime = Date.now(), 
+            updateTouch(touch, e), touch.ctx = handler.start(touch), holdHandler = function() {
                 return touch && !touch.holding && touch.maxDist2 < tapDist2 ? (touch.holding = !0, 
                 touch.handler.hold(touch)) : void 0;
             }, setTimeout(holdHandler, tapLength);
         }, moveTouch = function(e) {
-            return updateTouch(touch, e), touch.ctx = touch.handler.move(touch || touch.ctx);
+            return updateTouch(touch, e), log("moveTouch", touch.x, touch.y), touch.ctx = touch.handler.move(touch || touch.ctx);
         }, stopTouch = function() {
-            return touch.handler.end(touch), touch.maxDist2 < tapDist2 && touch.time < tapLength && touch.handler.click(touch), 
+            return log("stopTouch"), touch.handler.end(touch), touch.maxDist2 < tapDist2 && touch.time < tapLength && touch.handler.click(touch), 
             touch = void 0;
         }, condCall = function(fn) {
             return function(e) {
@@ -284,8 +284,7 @@
                     imgsrc = img.src, fullScreenOriginalState ? sleep(.5, function() {
                         var largeImage;
                         return largeImage = new Image(), largeImage.onload = function() {
-                            return console.log("here", imgsrc, img.src), imgsrc === img.src && (img.src = largeImage.src), 
-                            cache360Images(nop);
+                            return imgsrc === img.src && (img.src = largeImage.src), cache360Images(nop);
                         }, largeImage.src = cfg.zoomURLs[floatPart(currentAngle / Math.PI / 2) * cfg.imageURLs.length | 0];
                     }) : void 0;
                 });
@@ -307,7 +306,7 @@
                         return endZoom(t);
                     });
                 }, eventHandler.click = function(t) {
-                    return t.isMouse ? (t.zoom360 = !0, nextTick(function() {
+                    return t.isMouse ? (log("click"), t.zoom360 = !0, nextTick(function() {
                         return setTouch(t);
                     })) : void 0;
                 };
