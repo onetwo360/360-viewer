@@ -1,7 +1,7 @@
 (function() {
-    var asyncEach, body, cacheImgs, elemAddEventListener, extend, floatPart, identityFn, log, logfrequency, logurl, nextTick, nop, onComplete, post, runOnce, setStyle, setTouch, sleep, touchHandler, _ref, __slice = (window[360] = {}, 
+    var asyncEach, body, cacheImgs, devMode, elemAddEventListener, extend, floatPart, identityFn, log, logfrequency, logurl, nextTick, nop, onComplete, post, removeElem, runOnce, setStyle, setTouch, sleep, touchHandler, _ref, __slice = (window[360] = {}, 
     [].slice);
-    sleep = function(time, fn) {
+    devMode = !0, sleep = function(time, fn) {
         return setTimeout(fn, 1e3 * time);
     }, floatPart = function(n) {
         return n - Math.floor(n);
@@ -34,10 +34,12 @@
         return void 0;
     }, null == Date.now && (Date.now = function() {
         return +new Date();
-    }), body = document.getElementsByTagName("body")[0], onComplete = function(fn) {
+    }), removeElem = function(elem) {
+        return null != elem ? elem.parentElement.removeChild(elem) : void 0;
+    }, body = document.getElementsByTagName("body")[0], onComplete = function(fn) {
         var f;
         return (f = function() {
-            return "interactive" === document.readyState || "complete" === document.readyState ? fn() : setTimeout(f, 10);
+            return "complete" === document.readyState ? fn() : setTimeout(f, 10);
         })();
     }, setStyle = function(elem, obj) {
         var e, key, val;
@@ -57,7 +59,7 @@
         return xhr = new XMLHttpRequest(), xhr.open("POST", url, !!asyncCallback), xhr.setRequestHeader("Content-type", "text/plain"), 
         asyncCallback && (xhr.onreadystatechange = function() {
             return 4 === xhr.readyState ? asyncCallback(200 === xhr.status ? null : xhr.status, xhr.responseText) : void 0;
-        }), xhr.send(data), xhr.responseText;
+        }), xhr.send(data), asyncCallback ? void 0 : xhr.responseText;
     }, cacheImgs = function(urls, callback) {
         var loadImg;
         return loadImg = function(url, done) {
@@ -90,7 +92,7 @@
             return log("window.onerror", null != err ? err.message : void 0);
         }), function() {
             var arg, args, e;
-            return args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], console.log.apply(console, args), 
+            return args = 1 <= arguments.length ? __slice.call(arguments, 0) : [], "undefined" != typeof console && null !== console && "function" == typeof console.log && console.log.apply(console, args), 
             args = function() {
                 var _i, _len, _results;
                 for (_results = [], _i = 0, _len = args.length; _len > _i; _i++) {
@@ -187,8 +189,7 @@
                 return setStyle(img, {
                     top: "0px",
                     left: "0px"
-                }), "undefined" != typeof spinnerElem && null !== spinnerElem && spinnerElem.remove(), 
-                w = cfg.request_width, h = cfg.request_height, logoElem = document.createElement("i"), 
+                }), w = cfg.request_width, h = cfg.request_height, logoElem = document.createElement("i"), 
                 logoElem.className = "icon-OneTwo360Logo", container.appendChild(logoElem), setStyle(logoElem, {
                     position: "absolute",
                     top: .35 * h + "px",
@@ -224,9 +225,10 @@
                 return get360Config();
             }), get360Config = function() {
                 var callbackName, scriptTag;
-                return callbackName = "callback" + ++callbackNo, window[callbackName] = function(data) {
-                    var file, serverConfig;
-                    return log("data from embed.onetwo360.com:", data), serverConfig = {
+                return callbackName = "callback" + ++callbackNo, devMode && (callbackName = "callback"), 
+                window.xxx = scriptTag = void 0, window[callbackName] = function(data) {
+                    var e, file, serverConfig;
+                    log("data from embed.onetwo360.com:", data), serverConfig = {
                         imageURLs: function() {
                             var _i, _len, _ref1, _results;
                             for (_ref1 = data.files, _results = [], _i = 0, _len = _ref1.length; _len > _i; _i++) file = _ref1[_i], 
@@ -242,7 +244,7 @@
                         request_width: data.width,
                         request_height: data.width
                     }, zoomWidth = data.zoomWidth, zoomHeight = data.zoomHeight, cfg = extend({}, default360Config, serverConfig, cfg), 
-                    init360Elem(), scriptTag.remove(), setStyle(elem, {
+                    init360Elem(), removeElem(scriptTag), setStyle(elem, {
                         display: "inline-block",
                         width: data.width + "px",
                         height: data.height + "px",
@@ -250,9 +252,14 @@
                     }), setStyle(container, {
                         width: data.width + "px",
                         height: data.height + "px"
-                    }), delete window[callbackName];
-                }, scriptTag = document.createElement("script"), scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName, 
-                document.getElementsByTagName("head")[0].appendChild(scriptTag);
+                    });
+                    try {
+                        return delete window[callbackName];
+                    } catch (_error) {
+                        return void (e = _error);
+                    }
+                }, window.xxx = scriptTag = document.createElement("script"), scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName, 
+                devMode && (scriptTag.src = "/testdata/config.js"), document.getElementsByTagName("head")[0].appendChild(scriptTag);
             }, init360Elem = function() {
                 return cache360Images(function() {
                     return setStyle(img, {

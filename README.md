@@ -46,6 +46,7 @@ Widget for showing OneTwo360 images/animations
 - collect statistics
 - fix android full-screen issues
 - IE - test
+  - IE8 issues: zoom lense not working as we are using css positioned background
 
 #### Future
 
@@ -79,6 +80,16 @@ in non-HTML5 browsers, such as IE8,
 which we also need to support.
 
 # Literate source code
+The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build. The line wil automatically be removed in production builds
+
+    require("solapp").globalDefines global if typeof isNodeJs != "boolean"
+    
+
+use dummy data, grep and remove when moving into production
+
+    devMode = true
+    
+
 ## Utilities
 
     if !isNodeJs
@@ -113,8 +124,9 @@ Added here, because of requirement of no dependencies, - would otherwise use jqu
 
 
       Date.now ?= -> (+ new Date())
+      removeElem = (elem) -> elem?.parentElement.removeChild elem # elem.remove() not available on IE8
       body = document.getElementsByTagName("body")[0] # TODO: make sure this runs after onload
-      onComplete = (fn) -> do f = -> if document.readyState == "interactive" or document.readyState == "complete" then fn() else setTimeout f, 10
+      onComplete = (fn) -> do f = -> if document.readyState == "complete" then fn() else setTimeout f, 10
       setStyle = (elem, obj) -> #{{{4
         for key, val of obj
           try
@@ -151,7 +163,10 @@ implementation (and it is XDomainRequest, instead of xhr)
               asyncCallback (if xhr.status == 200 then null else xhr.status), xhr.responseText
     
         xhr.send data
-        return xhr.responseText
+        if !asyncCallback
+          return xhr.responseText
+        else
+          undefined
     
 
 ### Web utilities
@@ -182,7 +197,7 @@ implementation disable at the moment, as we have another approach
           ->
             for node in (node for node in oldbody.childNodes)
               body.appendChild node
-            oldbody.remove()
+            removeElem oldbody
             if nextSibling
               elem.insertBefore nextSibling
             else
@@ -204,7 +219,6 @@ how many seconds between each log push
 actual implementation
 
       log = do ->
-    
 
 session stamp random number
 
@@ -235,7 +249,7 @@ session stamp random number
           log "window.onerror", err?.message
     
         return (args...) ->
-          console.log args...
+          console?.log? args...
           args = for arg in args
             try
               JSON.stringify arg
@@ -401,7 +415,6 @@ borderBottomRightRadius: (zoomSize/5) + "px"
             setStyle img,
               top: "0px"
               left: "0px"
-            spinnerElem?.remove()
             w = cfg.request_width
             h = cfg.request_height
             logoElem = document.createElement "i"
@@ -453,7 +466,8 @@ borderBottomRightRadius: (zoomSize/5) + "px"
 
           get360Config = ->
             callbackName = "callback" + ++callbackNo
-            callbackName = "callback" if isDevServer
+            callbackName = "callback" if devMode
+            window.xxx = scriptTag = undefined
             window[callbackName] = (data) ->
               log "data from embed.onetwo360.com:", data
               serverConfig =
@@ -465,7 +479,7 @@ borderBottomRightRadius: (zoomSize/5) + "px"
               zoomHeight = data.zoomHeight
               cfg = extend {}, default360Config, serverConfig, cfg
               init360Elem()
-              scriptTag.remove()
+              removeElem scriptTag
               setStyle elem,
                 display: "inline-block"
                 width: data.width + "px"
@@ -474,10 +488,13 @@ borderBottomRightRadius: (zoomSize/5) + "px"
               setStyle container,
                 width: data.width + "px"
                 height: data.height + "px"
-              delete window[callbackName]
-            scriptTag = document.createElement "script"
+              try
+                delete window[callbackName]
+              catch e
+                undefined
+            window.xxx = scriptTag = document.createElement "script"
             scriptTag.src = "http://embed.onetwo360.com/" + cfg.product_id + "?callback=" + callbackName
-            scriptTag.src = "/testdata/config.js" if isDevServer
+            scriptTag.src = "/testdata/config.js" if devMode
             document.getElementsByTagName("head")[0].appendChild scriptTag
         
 
@@ -654,15 +671,8 @@ img.style.cursor = "crosshair" # cannot reset cursor style, as it will mess up z
             false
 
 ## Development code
-
 The following code is used during development.
 It will automatically be removed when it is compiled and minified.
-
-The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build.
-
-    require("solapp").globalDefines global if typeof isNodeJs != "boolean"
-    
-
 ### Meta information about the application
 This is primarily used for the README.md and to make sure necessary css are included when the devserver is running, and also that the minified version `webjs` is build.
 
