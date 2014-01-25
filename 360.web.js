@@ -137,7 +137,9 @@
             };
         }, documentTouch = runOnce(function() {
             return elemAddEventListener(document, "mousemove", condCall(moveTouch)), elemAddEventListener(document, "touchmove", condCall(moveTouch)), 
-            elemAddEventListener(document, "mouseup", condCall(stopTouch)), elemAddEventListener(document, "touchend", condCall(stopTouch));
+            elemAddEventListener(document, "mouseup", function(e) {
+                return log("mouseup"), condCall(stopTouch)(e);
+            }), elemAddEventListener(document, "touchend", condCall(stopTouch));
         }), touchHandler = function(handler) {
             return elemAddEventListener(handler.elem, "mousedown", function(e) {
                 return "function" == typeof e.preventDefault && e.preventDefault(), startTouch(e, handler, {
@@ -200,7 +202,9 @@
                     color: "#333",
                     transition: "opacity 1s"
                 }), logoElem.onmouseover = function() {
-                    return logoElem.style.opacity = "0";
+                    return logoElem.style.opacity = "0", sleep(1, function() {
+                        return logoElem.style.display = "none";
+                    });
                 }, buttonStyle = function(el) {
                     return setStyle(el, {
                         position: "absolute",

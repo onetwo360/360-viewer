@@ -1,5 +1,7 @@
 callback({
   "width": 1000,
+  "zoomWidth": 1000,
+  "zoomHeight": 447,
   "height": 447,
   "files": [
     {

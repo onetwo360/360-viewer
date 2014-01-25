@@ -74,6 +74,20 @@
 # in non-HTML5 browsers, such as IE8, 
 # which we also need to support.
 #
+#{{{2 Refactor notes
+#
+# - compatibility layer
+# - element with 360-rotation
+#   - current frame
+#   - current-frame overlays (
+#   - zoom lens
+#   - general overlays
+# - event handling
+# - cache handling
+#
+# - model
+#   - current frame
+#   - 
 #{{{1 Literate source code
 # The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build. The line wil automatically be removed in production builds
 require("solapp").globalDefines global if typeof isNodeJs != "boolean"
@@ -292,7 +306,7 @@ if !isNodeJs
     documentTouch = runOnce -> #{{{4
       elemAddEventListener document, "mousemove", condCall moveTouch
       elemAddEventListener document, "touchmove", condCall moveTouch
-      elemAddEventListener document, "mouseup", condCall stopTouch
+      elemAddEventListener document, "mouseup", (e) -> log "mouseup"; (condCall stopTouch)(e)
       elemAddEventListener document, "touchend", condCall stopTouch
   
     touchHandler = (handler) -> #{{{4
@@ -392,6 +406,9 @@ if !isNodeJs
           transition: "opacity 1s"
         logoElem.onmouseover = ->
           logoElem.style.opacity = "0"
+          sleep 1, ->
+            logoElem.style.display = "none"
+
   
         buttonStyle = (el) ->
           setStyle el,
