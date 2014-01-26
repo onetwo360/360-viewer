@@ -698,3 +698,123 @@ if isNodeJs then do ->
         res.end()
 
 
+#{{{1 Version 2
+if !isNodeJs then do ->
+  #{{{2 utility
+  #{{{3 extend
+  #{{{2 Model
+  #
+  # The model is just a json object that is passed around. This has all the state for the onetwo360 viewer
+  #
+  defaultModel = ->
+    frames:
+      current: 0
+      normal:
+        width: undefined
+        height: undefined
+        urls: []
+      zoom:
+        width: undefined
+        height: undefined
+        urls: []
+    fullscreen:
+      false
+    zoom:
+      lensSize: 200
+      enabled: false
+      # x/y-position on image normalised in [0;1]
+      x: undefined
+      y: undefined
+    domElem:
+      width: undefined
+      height: undefined
+      domId: undefined
+
+
+  #{{{2 View
+  #
+  # The html of the view is static, only updated through css-changes. 
+  #
+  #{{{3 `View` constructor, - create a viw and bind it to a dom element
+  #
+  # Create the view, - and bind it to a dom element
+  #
+  View = (model, domId) ->
+    @model = model
+
+    @elems = {}
+    @elems.root = document.createElement "div"
+    @elems.root.innerHTML = """<
+      div class="onetwo360-zoom-lens></div><
+      div class="onetwo360-logo></div><
+      div class="onetwo360-fullscreen-button></div><
+      div class="onetwo360-zoom-button></div><
+      div></div>"""
+    elemNames = ["zoomLens", "logo", "btnFull", "btnZoom"]
+    for i in [0..elemNames.length]
+      @elems.root.getChildren
+      @elems[key]
+
+    @elemStyle = {}
+    @style = {}
+    @styleCache = {}
+    for key, _ of @elems
+      @style[key] = {}
+      @elemStyle[key] = @elems[key].style
+      @styleCache[key] = {}
+
+    domElem = document.getElementById(domId)
+    domElem.addChild @elems.root
+    @defaultWidth = domElem.offsetWidth
+    @defaultHeigh = domElem.offsetHeight
+
+    @width = undefined
+    @height = undefined
+
+    @update()
+
+  #{{{3 `View#update()` draw the view based on current content of the model
+  View.prototype.update = ->
+    @_fullscreen()
+    @_root()
+    @_zoomLens()
+    @_applyStyle()
+
+  #{{{3 private utility functions for updating the view
+  View.prototype._fullscreen= -> #{{{4
+    if @model.fullscreen
+      extend @style.root,
+        position: "absolute"
+        top: 0
+        left: 0
+        width: (@width = window.innerWidth)
+        height: (@height = window.innerHeight)
+    else
+      extend @style.root,
+        position: "relative"
+        top: 0
+        left: 0
+        width: (@width = @defaultWidth)
+        height: (@height = @defaultHeight)
+
+  View.prototype._root= -> #{{{4
+    extend @style.root,
+      backgroundImage: "url(#{@model.frames.normal.urls[@model.frames.current]})"
+      backgroundSize: "#{@width}px #{@height}px"
+
+  View.prototype._zoomLens = -> #{{{4
+    undefined
+
+  View.prototype._applyStyle = -> #{{{4
+    for elemId, css of @style
+      for key, val of css
+        if @styleCache[key] != val
+          if typeof val == "number"
+            @elemStyle[elemId][key] = "#{val}px"
+          else
+            @elemStyle[elemId][key] = val
+          @styleCache[key] = val
+
+
+  #{{{2 main
+  window.newOneTwo360 = (cfg) ->
