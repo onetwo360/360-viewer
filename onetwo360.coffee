@@ -9,23 +9,47 @@ if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
 
 #{{{1 Testing
 if runTest
-  testcount = 2
+  testcount = 4
   currentTestId = 0
   console.log "1..#{testcount}"
   expect = (expected, result, description) ->
-    if expected == result
+    if JSON.stringify(expected) == JSON.stringify(result)
       console.log "ok #{++currentTestId} #{description || ""}"
     else
       console.log "not ok #{++currentTestId} + #{description || ""}" +
         "expected:#{JSON.stringify expected}" +
         "got:#{JSON.stringify result}"
  
-  expect 1, 1
-  expect 2, 2
-
 #{{{1 Version 2
 if !isNodeJs
   #{{{2 utility
+  #{{{3 ajax
+  ajax = (url, data, cb) ->
+    xhr = new XMLHttpRequest()
+    xhr.open (if data then "POST" else "GET"), url, !!cb
+    if data
+      # Haven't done IE8/9 compat yet, but when we do
+      # only text/plain is possible, due to bug in that
+      # implementation (and it is XDomainRequest, instead of xhr)
+      xhr.setRequestHeader "Content-type", "text/plain"
+
+    if !!cb
+      xhr.onreadystatechange = ->
+        if xhr.readyState == 4
+          cb (if xhr.status == 200 then null else xhr.status), xhr.responseText
+
+    xhr.send data
+    if !cb
+      return xhr.responseText
+    else
+      undefined
+
+  if runTest
+    expect (ajax "http://cors-test.appspot.com/test"), '{"status":"ok"}', "sync ajax"
+    ajax "http://cors-test.appspot.com/test", undefined, (err, result) -> expect result, '{"status":"ok"}', "async ajax"
+    expect 1, 1
+    ajax "http://cors-test.appspot.com/test", "foo", (err, result) -> expect result, '{"status":"ok"}', "async ajax post"
+    
   #{{{3 extend
   extend = (target, source) ->
     for key, val of source
