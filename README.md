@@ -804,7 +804,7 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
             "got:#{JSON.stringify result}"
      
       expect 1, 1
-      expect 2, 3
+      expect 2, 2
     
 
 # Version 2
