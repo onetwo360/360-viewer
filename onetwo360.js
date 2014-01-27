@@ -21,9 +21,9 @@
     console.log("1.." + testcount);
     expect = function(expected, result, description) {
       if (expected === result) {
-        return console.log("ok", ++currentTestId, description || "");
+        return console.log("ok " + (++currentTestId) + " " + (description || ""));
       } else {
-        return console.log("not ok", ++currentTestId, description || "", "expected:" + (JSON.stringify(expected)), "got:" + (JSON.stringify(result)));
+        return console.log(("not ok " + (++currentTestId) + " + " + (description || "")) + ("expected:" + (JSON.stringify(expected))) + ("got:" + (JSON.stringify(result))));
       }
     };
     expect(1, 1);

@@ -7,19 +7,17 @@ if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
   root.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
   root.runTest = true if typeof runTest == "undefined"
 
-#{{{1 Test setup
+#{{{1 Testing
 if runTest
   testcount = 2
   currentTestId = 0
   console.log "1..#{testcount}"
   expect = (expected, result, description) ->
     if expected == result
-      console.log "ok", ++currentTestId, description || ""
+      console.log "ok #{++currentTestId} #{description || ""}"
     else
-      console.log "not ok",
-        ++currentTestId
-        description || ""
-        "expected:#{JSON.stringify expected}"
+      console.log "not ok #{++currentTestId} + #{description || ""}" +
+        "expected:#{JSON.stringify expected}" +
         "got:#{JSON.stringify result}"
  
   expect 1, 1
