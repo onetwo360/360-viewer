@@ -1,12 +1,11 @@
 {
-  "name": "360",
+  "name": "360-viewer",
   "version": "0.0.8",
   "devDependencies": {
     "express": "~3.4.8",
     "uglify-js": "~2.4.12",
     "reputil": "*"
   },
-  "fullname": "360º Viewer",
   "description": "Widget for showing OneTwo360 images/animations",
   "keywords": [],
   "author": "Rasmus Erik Voel Jensen (solsort.com)",
@@ -21,16 +20,17 @@
     "url": "https://github.com/onetwo360/360-viewer.git"
   },
   "dependencies": {
+    "phantom": "~0.5.4"
   },
   "testling": {
     "html": "test.html",
     "browsers": [
-      "ie/8..latest",
-      "chrome/27..latest",
-      "firefox/22..latest",
+      "ie/7..latest",
+      "chrome/27..canary",
+      "firefox/22..nightly",
       "safari/5.0.5..latest",
-      "opera/11.6..latest",
-      "iphone/6", 
+      "opera/11.6..next",
+      "iphone/6",
       "ipad/6",
       "android-browser/4.2"
     ]
