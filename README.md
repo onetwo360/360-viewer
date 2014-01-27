@@ -1,7 +1,10 @@
 # 360 0.0.8
 
-Widget for showing OneTwo360 images/animations![ci](https://secure.travis-ci.org/onetwo360/360-viewer.png)
-![browser support](https://ci.testling.com/onetwo360/360-viewer.png)
+Widget for showing OneTwo360 images/animations
+[![ci](https://secure.travis-ci.org/onetwo360/360-viewer.png)](http://travis-ci.org/onetwo360/360-viewer)
+
+[![browser support](https://ci.testling.com/onetwo360/360-viewer.png)](http://ci.testling.com/onetwo360/360-viewer)
+
 
 # Documentation
 ## Roadmap
@@ -787,7 +790,7 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
       root.runTest = true if typeof runTest == "undefined"
     
 
-# Test setup
+# Testing
 
     if runTest
       testcount = 2
@@ -795,12 +798,10 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
       console.log "1..#{testcount}"
       expect = (expected, result, description) ->
         if expected == result
-          console.log "ok", ++currentTestId, description || ""
+          console.log "ok #{++currentTestId} #{description || ""}"
         else
-          console.log "not ok",
-            ++currentTestId
-            description || ""
-            "expected:#{JSON.stringify expected}"
+          console.log "not ok #{++currentTestId} + #{description || ""}" +
+            "expected:#{JSON.stringify expected}" +
             "got:#{JSON.stringify result}"
      
       expect 1, 1
