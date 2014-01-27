@@ -11,7 +11,7 @@
   "keywords": [],
   "author": "Rasmus Erik Voel Jensen (solsort.com)",
   "scripts": {
-    "prepublish": "reputil build; uglifyjs -m -c warnings=false -d isNodeJs=false,runTest=false onetwo360.js > onetwo360.min.js",
+    "prepublish": "reputil build; ./node_modules/.bin/uglifyjs -m -c warnings=false -d isNodeJs=false,runTest=false onetwo360.js > onetwo360.min.js",
     "start": "",
     "test": ""
   },
