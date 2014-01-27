@@ -1,4 +1,4 @@
-# 360 0.0.8
+# 360-viewer 0.0.8
 
 Widget for showing OneTwo360 images/animations
 [![ci](https://secure.travis-ci.org/onetwo360/360-viewer.png)](http://travis-ci.org/onetwo360/360-viewer)
@@ -793,7 +793,10 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
 # Testing
 
     if runTest
-      testcount = 4
+      if isNodeJs
+        testcount = 0
+      else
+        testcount = 2
       currentTestId = 0
       console.log "1..#{testcount}"
       expect = (expected, result, description) ->
@@ -812,33 +815,24 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
 ## utility
 ### ajax
 
+      XHR = XMLHttpRequest
+      syncXDR = true
+      if typeof (new XHR).withCredentials != "boolean"
+        XHR = XDomainRequest
+        syncXDR = false
+    
       ajax = (url, data, cb) ->
-        xhr = new XMLHttpRequest()
+        console.log url
+        xhr = new XHR()
+        xhr.onload = -> cb? (if xhr.status == 200 then null else xhr.status), xhr.responseText
         xhr.open (if data then "POST" else "GET"), url, !!cb
-        if data
-
-Haven't done IE8/9 compat yet, but when we do
-only text/plain is possible, due to bug in that
-implementation (and it is XDomainRequest, instead of xhr)
-
-          xhr.setRequestHeader "Content-type", "text/plain"
-    
-        if !!cb
-          xhr.onreadystatechange = ->
-            if xhr.readyState == 4
-              cb (if xhr.status == 200 then null else xhr.status), xhr.responseText
-    
         xhr.send data
-        if !cb
-          return xhr.responseText
-        else
-          undefined
+        return xhr.responseText if !cb
     
       if runTest
-        expect (ajax "http://cors-test.appspot.com/test"), '{"status":"ok"}', "sync ajax"
-        ajax "http://cors-test.appspot.com/test", undefined, (err, result) -> expect result, '{"status":"ok"}', "async ajax"
-        expect 1, 1
-        ajax "http://cors-test.appspot.com/test", "foo", (err, result) -> expect result, '{"status":"ok"}', "async ajax post"
+        ajax "//cors-test.appspot.com/test", undefined, (err, result) -> expect result, '{"status":"ok"}', "async ajax"
+        ajax "//cors-test.appspot.com/test", "foo", (err, result) -> expect result, '{"status":"ok"}', "async ajax post"
+        ajax "/api/log", "foobar", (err, result) -> console.log result
         
 
 ### extend
@@ -1069,6 +1063,19 @@ borderBottomRightRadius: (zoomSize/5)
       express = require "express"
       app = express()
       app.use express.static __dirname
+      app.use "/api", (req, res, next) ->
+        data = ""
+        req.on "data", (d) -> data += d
+        req.on "end", ->
+          res.header 'Access-Control-Allow-Origin', "*"
+          res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
+          res.header 'Access-Control-Allow-Headers', 'Content-Type'
+          console.log req.originalUrl, data
+          res.json {ok:true}
+          res.end()
+    
+    
+    
       port = 4444
       app.listen port
       console.log "devserver running on port #{port}"
