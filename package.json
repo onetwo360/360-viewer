@@ -24,9 +24,8 @@
   },
   "testling": {
     "html": "test.html",
-    "scripts": ["onetwo360.js"],
     "browsers": [
-      "chrome/20..latest"
+      "ff24"
     ]
   }
 }
