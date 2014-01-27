@@ -889,6 +889,7 @@ The model is just a json object that is passed around. This has all the state fo
             width: undefined
             height: undefined
             urls: []
+        spinOnLoadFPS: 60
         fullscreen:
           false
         zoom:
@@ -940,6 +941,9 @@ Create the view, - and bind it to a dom element
 
 NB: order of the following keys needs to be the exactly same as the children of the dom root node
 
+          image:
+            width: "100%"
+            height: "100%"
           zoomLens:
             display: "block"
             position: "absolute"
@@ -988,6 +992,7 @@ borderBottomRightRadius: (zoomSize/5)
         @elems = {}
         @elems.root = document.createElement "div"
         @elems.root.innerHTML =
+          '<img>' +
           '<div class="onetwo360-zoom-lens"></div>' +
           '<i class="icon-OneTwo360Logo"></i>' +
           '<i class="fa fa-fullscreen onetwo360-fullscreen-button"></i>' +
@@ -1005,6 +1010,7 @@ borderBottomRightRadius: (zoomSize/5)
         @width = undefined
         @height = undefined
         @logoFade = undefined
+        @imgSrc = undefined
     
 
 #### Data structure for optimised style update
@@ -1023,6 +1029,7 @@ borderBottomRightRadius: (zoomSize/5)
 #### Update view
 
         @update()
+        return this
     
 
 ### `View#update()` draw the view based on current content of the model
@@ -1032,6 +1039,7 @@ borderBottomRightRadius: (zoomSize/5)
         @_root()
         @_logo()
         @_zoomLens()
+        @_image()
         @_applyStyle()
     
 
@@ -1043,8 +1051,8 @@ borderBottomRightRadius: (zoomSize/5)
             position: "absolute"
             top: 0
             left: 0
-            width: (@width = window.innerWidth)
-            height: (@height = window.innerHeight)
+            width: (@width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth)
+            height: (@height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight)
         else
           extend @style.root,
             position: "relative"
@@ -1054,9 +1062,12 @@ borderBottomRightRadius: (zoomSize/5)
             height: (@height = @defaultHeight)
     
       View.prototype._root = -> #{{{4
-        extend @style.root,
-          backgroundImage: "url(#{@model.frames.normal.urls[@model.frames.current]})"
-          backgroundSize: "#{@width}px #{@height}px"
+        undefined
+
+extend @style.root,
+backgroundImage: "url(#{@model.frames.normal.urls[@model.frames.current]})"
+backgroundSize: "#{@width}px #{@height}px"
+
     
       View.prototype._logo = -> #{{{4
             top: @height*.35 + "px"
@@ -1077,25 +1088,102 @@ borderBottomRightRadius: (zoomSize/5)
           extend @style.zoomLens,
             display: "none"
     
+      View.prototype._image = -> #{{{4
+        imgSrc = @model.frames.normal.urls[@model.frames.current]
+        if imgSrc != undefined && imgSrc != @imgSrc
+          @elems.image.src = imgSrc
+          @imgSrc = imgSrc
+    
       View.prototype._applyStyle = -> #{{{4
         for elemId, css of @style
           for key, val of css
             if @styleCache[elemId][key] != val
               val = val + "px" if typeof val == "number"
-              @elemStyle[elemId][key] = val
+              if true || !runTest
+                @elemStyle[elemId][key] = val
+              else
+                try
+                  @elemStyle[elemId][key] = val
+                catch e
+                  console.log "Cannot set #{key}:#{val} on #{elemId}"
+                  throw e
+    
               @styleCache[elemId][key] = val
     
 
 ### test
 
-      if runTest then do ->
-        model = deepCopy(defaultModel)
-        for frames in [model.frames.normal, model.frames.zoom]
-          model.width = frames.width = 1000
-          model.height = frames.height = 447
-          for i in [1..52]
-            frames.urls.push "/testdata/#{i}.jpg"
-        view = new View(model, "threesixtyproduct")
+      if runTest
+        testModel = deepCopy(defaultModel)
+        testView = undefined
+        do ->
+          for frames in [testModel.frames.normal, testModel.frames.zoom]
+            testModel.width = frames.width = 1000
+            testModel.height = frames.height = 447
+            for i in [1..52]
+              frames.urls.push "/testdata/#{i}.jpg"
+          t0 = +(new Date())
+          testView = new View(testModel, "threesixtyproduct")
+          t1 = +(new Date())
+          testModel.frames.current = 0
+          testModel.fullscreen = true
+          testView.update()
+    
+    
+
+## Loader / caching
+
+     
+
+### Cache frames
+
+      cacheFrames = (frameset, cb) ->
+        frameset.loaded = []
+        count = 0
+        for i in [0..frameset.urls.length - 1]
+          img = new Image()
+          img.onload = ((i) -> -> frameset.loaded[i] = +(new Date()); (cb?() if ++count == frameset.urls.length))(i)
+          img.src = frameset.urls[i]
+    
+
+### Incremental load
+
+      incrementalLoad = (model, view, cb) ->
+        loadStart = +(new Date())
+        lastTime = 0
+        lastSetFrame = 0
+        allLoaded = false
+        model.frames.current = 0
+        incrementalUpdate = ->
+          count = 0
+          maxTime = loadStart
+          while model.frames.normal.loaded[count]
+            maxTime = Math.max(model.frames.normal.loaded[count], maxTime)
+            ++count
+          if count > model.frames.current + 1
+            now = +(new Date())
+            loadTime = (maxTime - loadStart) / count
+            if lastTime + Math.max(loadTime, 1000/model.spinOnLoadFPS) < now
+              lastTime = now
+              lastSetFrame = ++model.frames.current
+              view.update()
+          if (model.frames.current == lastSetFrame) && (model.frames.current < model.frames.normal.urls.length - 1)
+            setTimeout incrementalUpdate, 0
+          else
+            cb()
+    
+        if model.spinOnLoadFPS
+          cacheFrames model.frames.normal, -> console.log "loaded"
+          incrementalUpdate()
+        else
+          cacheFrames model.frames.normal cb
+    
+    
+
+### test
+
+      if runTest
+        incrementalLoad testModel, testView, -> console.log "spinned"
     
     
 

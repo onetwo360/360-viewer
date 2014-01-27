@@ -93,7 +93,7 @@ if !isNodeJs
         width: undefined
         height: undefined
         urls: []
-    spinOnLoadFPS: 60
+    spinOnLoadFPS: 50
     fullscreen:
       false
     zoom:
@@ -213,8 +213,20 @@ if !isNodeJs
     @update()
     return this
 
-  #{{{3 `View#update()` draw the view based on current content of the model
+  #{{{3 `View#update()` request redraw the view based on current content of the model
+ 
   View.prototype.update = ->
+    return if @updateReq
+    @updateReq = true
+    self = this
+    setTimeout (-> self._update(); self.updateReq = false), 0
+  if runTest
+    lastUpdateTime = undefined
+
+  View.prototype._update = ->
+    if runTest
+      console.log "update after #{+(new Date()) - lastUpdateTime}ms"
+      lastUpdateTime = +(new Date())
     @_fullscreen()
     @_root()
     @_logo()
@@ -318,9 +330,10 @@ if !isNodeJs
   #{{{3 Incremental load
   incrementalLoad = (model, view, cb) ->
     loadStart = +(new Date())
-    lastTime = 0
+    lastTime = undefined
     lastSetFrame = 0
     allLoaded = false
+    console.log loadStart - t0
     model.frames.current = 0
     incrementalUpdate = ->
       count = 0
@@ -330,26 +343,33 @@ if !isNodeJs
         ++count
       if count > model.frames.current + 1
         now = +(new Date())
+        lastTime ?= now
         loadTime = (maxTime - loadStart) / count
-        if lastTime + Math.max(loadTime, 1000/model.spinOnLoadFPS) < now
+        frameTime = Math.max(loadTime, 1000/model.spinOnLoadFPS)
+        console.log frameTime, now - lastTime
+        if lastTime + frameTime < now
+          while lastTime + frameTime < now
+            lastSetFrame = model.frames.current = Math.min(count - 1, model.frames.current + 1)
+            lastTime += frameTime
           lastTime = now
-          lastSetFrame = ++model.frames.current
           view.update()
+
       if (model.frames.current == lastSetFrame) && (model.frames.current < model.frames.normal.urls.length - 1)
         setTimeout incrementalUpdate, 0
       else
         cb()
 
     if model.spinOnLoadFPS
-      cacheFrames model.frames.normal, -> console.log "loaded"
+      cacheFrames model.frames.normal, -> console.log "loaded #{+new Date() - t0}"
       incrementalUpdate()
     else
       cacheFrames model.frames.normal cb
 
 
+  t0 = +new Date()
   #{{{3 test
   if runTest
-    incrementalLoad testModel, testView, -> console.log "spinned"
+    incrementalLoad testModel, testView, -> console.log "spinned #{+new Date() - t0}"
 
 
   #{{{2 main
