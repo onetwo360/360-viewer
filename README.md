@@ -796,7 +796,7 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
       if isNodeJs
         testcount = 0
       else
-        testcount = 2
+        testcount = 6
       currentTestId = 0
       console.log "1..#{testcount}"
       expect = (expected, result, description) ->
@@ -813,26 +813,28 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
     if !isNodeJs
 
 ## utility
+## shim
+
+      Object.keys ?= (obj) -> (key for key, _ of obj)
+
 ### ajax
 
       XHR = XMLHttpRequest
-      syncXDR = true
+      legacy = false
       if typeof (new XHR).withCredentials != "boolean"
+        legacy = true
         XHR = XDomainRequest
-        syncXDR = false
     
       ajax = (url, data, cb) ->
-        console.log url
         xhr = new XHR()
         xhr.onload = -> cb? (if xhr.status == 200 then null else xhr.status), xhr.responseText
         xhr.open (if data then "POST" else "GET"), url, !!cb
         xhr.send data
         return xhr.responseText if !cb
     
-      if runTest
+      if runTest then do ->
         ajax "//cors-test.appspot.com/test", undefined, (err, result) -> expect result, '{"status":"ok"}', "async ajax"
         ajax "//cors-test.appspot.com/test", "foo", (err, result) -> expect result, '{"status":"ok"}', "async ajax post"
-        ajax "/api/log", "foobar", (err, result) -> console.log result
         
 
 ### extend
@@ -840,13 +842,43 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
       extend = (target, source) ->
         for key, val of source
           target[key] = val
+        return target
+    
+      if runTest then do ->
+        a = {a: 1, b:2}
+        expect (extend a, {b:3, c:4}), {a:1,b:3,c:4}, "extend"
+        expect a, {a:1,b:3,c:4}, "extend"
+    
+
+### deepCopy
+
+      deepCopy = (obj) ->
+        if typeof obj == "object"
+          if obj.constructor == Array
+            result = []
+            result.push deepCopy(e) for e in obj
+          else
+            result = {}
+            result[key] = deepCopy(val) for key, val of obj
+          return result
+        else
+          return obj
+    
+      if runTest then do ->
+        a = {a: [1,2,3]}
+        b = deepCopy a
+        b.b = "c"
+        b.a[1] = 3
+        expect a, {a: [1,2,3]}, "deepcopy original unmutated"
+        expect b, {a: [1,3,3], b: "c"}, "deepcopy copy with mutations"
+    
 
 ## Model
 
 The model is just a json object that is passed around. This has all the state for the onetwo360 viewer
 
 
-      defaultModel = ->
+      defaultModel =
         frames:
           current: 0
           normal:
@@ -886,18 +918,23 @@ Create the view, - and bind it to a dom element
       View = (model, domId) ->
         @model = model
         domElem = document.getElementById(domId)
-        @defaultWidth = domElem.offsetWidth
-        @defaultHeigh = domElem.offsetHeight
+        @defaultWidth = model.width || domElem.offsetWidth
+        @defaultHeight = model.height || domElem.offsetHeight
     
 
 #### Style
+##
 
         extend domElem.style,
           display: "inline-block"
           width: @defaultWidth + "px"
           height: @defaultHeight + "px"
+
+##
+
         @style =
           root:
+            display: "inline-block"
             cursor: "url(res/cursor_rotate.cur),move"
     
 
@@ -911,7 +948,7 @@ NB: order of the following keys needs to be the exactly same as the children of 
             height: @model.zoom.lensSize
             border: "0px solid black"
             cursor: "default"
-            backgroundColor: "rgba(100,100,100,0.8)"
+            backgroundColor: if !legacy then "rgba(100,100,100,0.8)" else undefined
             borderRadius: (@model.zoom.lensSize/2)
 
 borderBottomRightRadius: (zoomSize/5)
@@ -938,7 +975,7 @@ borderBottomRightRadius: (zoomSize/5)
           color: "#333"
           opacity: "0.7"
           textShadow: "0px 0px 5px white"
-          backgroundColor: "rgba(255,255,255,0)"
+          backgroundColor: if !legacy then "rgba(255,255,255,0)" else undefined
           top: "80%"
           fontSize: @defaultHeight * .08
           padding: @defaultHeight * .02
@@ -952,15 +989,15 @@ borderBottomRightRadius: (zoomSize/5)
         @elems.root = document.createElement "div"
         @elems.root.innerHTML =
           '<div class="onetwo360-zoom-lens"></div>' +
-          '<i class="icon-OneTwo360Logo"></div>' +
-          '<i class="fa fa-fullscreen onetwo360-fullscreen-button"></div>' +
-          '<i class="fa fa-search onetwo360-fullscreen-button"></div>' +
+          '<i class="icon-OneTwo360Logo"></i>' +
+          '<i class="fa fa-fullscreen onetwo360-fullscreen-button"></i>' +
+          '<i class="fa fa-search onetwo360-fullscreen-button"></i>' +
           '<img src="spinner.gif">'
-        domElem.addChild @elems.root
+        domElem.appendChild @elems.root
     
         elemNames = Object.keys @style
-        for i in [1..elemNames.length]
-          @elems[elemNames[i]] = @elems.root.getChild(i-1)
+        for i in [1..elemNames.length-1]
+          @elems[elemNames[i]] = @elems.root.childNodes[i-1]
     
 
 #### Properties that will be initialised later
@@ -1022,9 +1059,9 @@ borderBottomRightRadius: (zoomSize/5)
           backgroundSize: "#{@width}px #{@height}px"
     
       View.prototype._logo = -> #{{{4
-            top: h*.35 + "px"
-            left: w*.25  + "px"
-            fontSize: h*.2 + "px"
+            top: @height*.35 + "px"
+            left: @width*.25  + "px"
+            fontSize: @height*.2 + "px"
       View.prototype._zoomLens = -> #{{{4
         if @model.zoom.enabled
           current = @model.frames.current
@@ -1043,12 +1080,22 @@ borderBottomRightRadius: (zoomSize/5)
       View.prototype._applyStyle = -> #{{{4
         for elemId, css of @style
           for key, val of css
-            if @styleCache[key] != val
-              if typeof val == "number"
-                @elemStyle[elemId][key] = "#{val}px"
-              else
-                @elemStyle[elemId][key] = val
-              @styleCache[key] = val
+            if @styleCache[elemId][key] != val
+              val = val + "px" if typeof val == "number"
+              @elemStyle[elemId][key] = val
+              @styleCache[elemId][key] = val
+    
+
+### test
+
+      if runTest then do ->
+        model = deepCopy(defaultModel)
+        for frames in [model.frames.normal, model.frames.zoom]
+          model.width = frames.width = 1000
+          model.height = frames.height = 447
+          for i in [1..52]
+            frames.urls.push "/testdata/#{i}.jpg"
+        view = new View(model, "threesixtyproduct")
     
     
 
