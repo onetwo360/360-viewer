@@ -23,7 +23,7 @@ if runTest
         "got:#{JSON.stringify result}"
  
   expect 1, 1
-  expect 2, 3
+  expect 2, 2
 
 #{{{1 Version 2
 if !isNodeJs

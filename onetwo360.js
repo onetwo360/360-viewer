@@ -27,7 +27,7 @@
       }
     };
     expect(1, 1);
-    expect(2, 3);
+    expect(2, 2);
   }
 
   if (!isNodeJs) {
