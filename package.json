@@ -1,21 +1,24 @@
 {
-    "name": "360",
-    "version": "0.0.7",
-    "dependencies": {
-        "solapp": "*",
-        "platformenv": "*"
-    },
-    "fullname": "360º Viewer",
-    "description": "Widget for showing OneTwo360 images/animations",
-    "keywords": [],
-    "author": "Rasmus Erik Voel Jensen (solsort.com)",
-    "main": "360.js",
-    "scripts": {
-        "start": "node ./node_modules/solapp/solapp.js start",
-        "test": "node ./node_modules/solapp/solapp.js test"
-    },
-    "repository": {
-        "type": "git",
-        "url": "http://github.com/onetwo360/360.git"
-    }
+  "name": "360",
+  "version": "0.0.8",
+  "devDependencies": {
+    "express": "~3.4.8",
+    "reputil": "*"
+  },
+  "fullname": "360º Viewer",
+  "description": "Widget for showing OneTwo360 images/animations",
+  "keywords": [],
+  "author": "Rasmus Erik Voel Jensen (solsort.com)",
+  "scripts": {
+    "prepublish": "reputil build; uglifyjs -mc -d isNodeJs=false -d runTest=false < onetwo360.js > onetwo360.min.js",
+    "start": "",
+    "test": ""
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onetwo360/360.git"
+  },
+  "dependencies": {
+  }
 }
