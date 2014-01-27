@@ -3,6 +3,7 @@
   "version": "0.0.8",
   "devDependencies": {
     "express": "~3.4.8",
+    "uglify-js": "~2.4.12",
     "reputil": "*"
   },
   "fullname": "360º Viewer",
@@ -23,13 +24,14 @@
   },
   "testling": {
     "html": "test.html",
-    "browsers" : [
+    "browsers": [
       "ie/6..latest",
       "chrome/20..latest",
       "firefox/10..latest",
       "safari/latest",
       "opera/11.0..latest",
-      "iphone/6", "ipad/6",
+      "iphone/6",
+      "ipad/6",
       "android-browser/4.2"
     ]
   }
