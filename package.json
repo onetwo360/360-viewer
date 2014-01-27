@@ -22,16 +22,14 @@
   "dependencies": {
   },
   "testling": {
-    "scripts": ["onetwo360.js"],
-    "browsers": {
-      "ie": [8,9,10],
-      "firefox": [25],
-      "chrome": [31],
-      "safari": [5.1],
-      "opera": [17],
-      "iphone": [6],
-      "ipad": [6],
-      "android-browser": [4.2]
-    }
+    "html": "test.html",
+    "browsers" : [
+      "ie/6..latest",
+      "chrome/20..latest",
+      "firefox/10..latest",
+      "safari/latest",
+      "opera/11.0..latest",
+      "iphone/6", "ipad/6"
+    ]
   }
 }

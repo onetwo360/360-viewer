@@ -1,6 +1,7 @@
 # 360 0.0.8
 
 Widget for showing OneTwo360 images/animations![ci](https://secure.travis-ci.org/onetwo360/360.png)
+![browser support](https://ci.testling.com/onetwo360/360.png)
 
 # Documentation
 ## Roadmap
@@ -780,9 +781,30 @@ request_height: 400
 define `isNodeJs` and `runTest` in such a way that they will be fully removed by `uglifyjs -mc -d isNodeJs=false -d runTest=false `
 
 
-    global = window if typeof "global" == undefined and (typeof isNodeJs == "undefined" or typeof runTest == "undefined")
-    global.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
-    global.runTest = true if typeof runTest == "undefined"
+    if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
+      root = if typeof global == "undefined" then window else global
+      root.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
+      root.runTest = true if typeof runTest == "undefined"
+    
+
+# Test setup
+
+    if runTest
+      testcount = 2
+      currentTestId = 0
+      console.log "1..#{testcount}"
+      expect = (expected, result, description) ->
+        if expected == result
+          console.log "ok", ++currentTestId, description || ""
+        else
+          console.log "not ok",
+            ++currentTestId
+            description || ""
+            "expected:#{JSON.stringify expected}"
+            "got:#{JSON.stringify result}"
+     
+      expect 1, 1
+      expect 2, 3
     
 
 # Version 2
@@ -792,10 +814,9 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
 ## utility
 ### extend
 
-      extend = (target, sources...) ->
-        for source in sources
-          for key, val of source
-            target[key] = val
+      extend = (target, source) ->
+        for key, val of source
+          target[key] = val
 
 ## Model
 
@@ -1010,7 +1031,7 @@ borderBottomRightRadius: (zoomSize/5)
 
 ## main
 
-      window.newOneTwo360 = (cfg) ->
+      window.onetwo360 = (cfg) ->
         undefined
 
 # Dummy/test-server
