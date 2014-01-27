@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "Rasmus Erik Voel Jensen (solsort.com)",
   "scripts": {
-    "prepublish": "reputil build; uglifyjs -mc -d isNodeJs=false -d runTest=false < onetwo360.js > onetwo360.min.js",
+    "prepublish": "reputil build; uglifyjs -m -c warnings=false -d isNodeJs=false,runTest=false onetwo360.js > onetwo360.min.js",
     "start": "",
     "test": ""
   },
@@ -20,5 +20,18 @@
     "url": "https://github.com/onetwo360/360.git"
   },
   "dependencies": {
+  },
+  "testling": {
+    "scripts": ["onetwo360.js"],
+    "browsers": {
+      "ie": [8,9,10],
+      "firefox": [25],
+      "chrome": [31],
+      "safari": [5.1],
+      "opera": [17],
+      "iphone": [6],
+      "ipad": [6],
+      "android-browser": [4.2]
+    }
   }
 }

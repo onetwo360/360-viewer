@@ -2,14 +2,36 @@
 #
 # define `isNodeJs` and `runTest` in such a way that they will be fully removed by `uglifyjs -mc -d isNodeJs=false -d runTest=false `
 #
-global = window if typeof "global" == undefined and (typeof isNodeJs == "undefined" or typeof runTest == "undefined")
-global.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
-global.runTest = true if typeof runTest == "undefined"
+if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
+  root = if typeof global == "undefined" then window else global
+  root.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
+  root.runTest = true if typeof runTest == "undefined"
+
+#{{{1 Test setup
+if runTest
+  testcount = 2
+  currentTestId = 0
+  console.log "1..#{testcount}"
+  expect = (expected, result, description) ->
+    if expected == result
+      console.log "ok", ++currentTestId, description || ""
+    else
+      console.log "not ok",
+        ++currentTestId
+        description || ""
+        "expected:#{JSON.stringify expected}"
+        "got:#{JSON.stringify result}"
+ 
+  expect 1, 1
+  expect 2, 3
 
 #{{{1 Version 2
 if !isNodeJs
   #{{{2 utility
   #{{{3 extend
+  extend = (target, source) ->
+    for key, val of source
+      target[key] = val
   #{{{2 Model
   #
   # The model is just a json object that is passed around. This has all the state for the onetwo360 viewer
@@ -196,7 +218,7 @@ if !isNodeJs
 
 
   #{{{2 main
-  window.newOneTwo360 = (cfg) ->
+  window.onetwo360 = (cfg) ->
     undefined
 #{{{1 Dummy/test-server
 if isNodeJs
