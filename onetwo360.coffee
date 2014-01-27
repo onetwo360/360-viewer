@@ -26,6 +26,8 @@ if runTest
 #{{{1 Version 2
 if !isNodeJs
   #{{{2 utility
+  #{{{3 log
+  log = -> undefined
   #{{{2 shim
   Object.keys ?= (obj) -> (key for key, _ of obj)
   #{{{3 ajax
@@ -93,7 +95,7 @@ if !isNodeJs
         width: undefined
         height: undefined
         urls: []
-    spinOnLoadFPS: 50
+    spinOnLoadFPS: 30
     fullscreen:
       false
     zoom:
@@ -225,7 +227,7 @@ if !isNodeJs
 
   View.prototype._update = ->
     if runTest
-      console.log "update after #{+(new Date()) - lastUpdateTime}ms"
+      log "update after #{+(new Date()) - lastUpdateTime}ms"
       lastUpdateTime = +(new Date())
     @_fullscreen()
     @_root()
@@ -293,7 +295,7 @@ if !isNodeJs
             try
               @elemStyle[elemId][key] = val
             catch e
-              console.log "Cannot set #{key}:#{val} on #{elemId}"
+              log "Cannot set #{key}:#{val} on #{elemId}"
               throw e
 
           @styleCache[elemId][key] = val
@@ -303,16 +305,21 @@ if !isNodeJs
     testModel = deepCopy(defaultModel)
     testView = undefined
     do ->
-      for frames in [testModel.frames.normal, testModel.frames.zoom]
-        testModel.width = frames.width = 1000
-        testModel.height = frames.height = 447
-        for i in [1..52]
-          frames.urls.push "/testdata/#{i}.jpg"
+      testModel.frames.zoom.width = 1000
+      testModel.frames.zoom.height = 447
+      #testModel.width = testModel.frames.normal.width = 1000
+      #testModel.height = testModel.frames.normal.height = 447
+      testModel.width = testModel.frames.normal.width = 500
+      testModel.height = testModel.frames.normal.height = 223
+      for i in [1..52] by 1
+        #testModel.frames.normal.urls.push "/testdata/#{i}.jpg"
+        testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
+        testModel.frames.zoom.urls.push "/testdata/#{i}.jpg"
       t0 = +(new Date())
       testView = new View(testModel, "threesixtyproduct")
       t1 = +(new Date())
       testModel.frames.current = 0
-      testModel.fullscreen = true
+      testModel.fullscreen = false
       testView.update()
 
 
@@ -333,7 +340,6 @@ if !isNodeJs
     lastTime = undefined
     lastSetFrame = 0
     allLoaded = false
-    console.log loadStart - t0
     model.frames.current = 0
     incrementalUpdate = ->
       count = 0
@@ -346,7 +352,6 @@ if !isNodeJs
         lastTime ?= now
         loadTime = (maxTime - loadStart) / count
         frameTime = Math.max(loadTime, 1000/model.spinOnLoadFPS)
-        console.log frameTime, now - lastTime
         if lastTime + frameTime < now
           while lastTime + frameTime < now
             lastSetFrame = model.frames.current = Math.min(count - 1, model.frames.current + 1)
@@ -360,7 +365,7 @@ if !isNodeJs
         cb()
 
     if model.spinOnLoadFPS
-      cacheFrames model.frames.normal, -> console.log "loaded #{+new Date() - t0}"
+      cacheFrames model.frames.normal, -> log "loaded #{+new Date() - t0}"
       incrementalUpdate()
     else
       cacheFrames model.frames.normal cb
@@ -369,8 +374,7 @@ if !isNodeJs
   t0 = +new Date()
   #{{{3 test
   if runTest
-    incrementalLoad testModel, testView, -> console.log "spinned #{+new Date() - t0}"
-
+    incrementalLoad testModel, testView, -> log "spinned #{+new Date() - t0}"
 
   #{{{2 main
   window.onetwo360 = (cfg) ->
@@ -379,6 +383,9 @@ if !isNodeJs
 if isNodeJs
   express = require "express"
   app = express()
+  app.use (req, res, next) ->
+    res.header 'Cache-Control', "max-age=30, public"
+    next()
   app.use express.static __dirname
   app.use "/api", (req, res, next) ->
     data = ""
