@@ -26,9 +26,7 @@ if runTest
 #{{{1 Version 2
 if !isNodeJs
   #{{{2 utility
-  #{{{3 log
-  log = -> undefined
-  #{{{2 shim
+  #{{{3 shim
   Object.keys ?= (obj) -> (key for key, _ of obj)
   #{{{3 ajax
   XHR = XMLHttpRequest
@@ -39,7 +37,8 @@ if !isNodeJs
 
   ajax = (url, data, cb) ->
     xhr = new XHR()
-    xhr.onload = -> cb? (if xhr.status == 200 then null else xhr.status), xhr.responseText
+    xhr.onerror = (err) -> cb? err || true
+    xhr.onload = -> cb? null, xhr.responseText
     xhr.open (if data then "POST" else "GET"), url, !!cb
     xhr.send data
     return xhr.responseText if !cb
@@ -80,6 +79,55 @@ if !isNodeJs
     expect a, {a: [1,2,3]}, "deepcopy original unmutated"
     expect b, {a: [1,3,3], b: "c"}, "deepcopy copy with mutations"
 
+
+  #{{{3 add event listener
+  elemAddEventListener = (elem, type, fn) ->
+    if elem.addEventListener
+      elem.addEventListener type, fn, false
+    else
+      elem.attachEvent "on"+type, fn
+
+  #{{{3 log
+  log = undefined
+  do ->
+    logId = Math.random()
+    logUrl = "/api/log"
+    logData = []
+    logSyncing = false
+    logsBeforeSync = 200
+    syncDelay = 400
+    trySync = ->
+      if !logSyncing
+        try
+          logContent = JSON.stringify logData
+        catch e
+          logContent = "Error stringifying log"
+        logSyncing = logData
+        logData = []
+        ajax logUrl, logContent, (err, result) ->
+          setTimeout (-> logSyncing = false), syncDelay
+          if err
+            log "logsync error", err
+            logData = logSyncing.concat(logData)
+          else
+            logData.push [+(new Date()), "log sync'ed", logId]
+            trySync() if legacy && logData.length > 1
+
+    log = (args...) ->
+      logData.push [+(new Date()), args...]
+      trySync() if logData.length > logsBeforeSync || legacy
+
+    elemAddEventListener window, "error", -> log "window.onerror", err?.message
+    elemAddEventListener window, "beforeunload", ->
+      log "window.beforeunload"
+      try
+        ajax logUrl, JSON.stringify logData
+      catch e
+        undefined
+      undefined
+    log "starting", logId, window.performance
+
+
   #{{{2 Model
   #
   # The model is just a json object that is passed around. This has all the state for the onetwo360 viewer
@@ -109,6 +157,20 @@ if !isNodeJs
       height: undefined
       domId: undefined
 
+  #{{{3 test
+  if runTest
+    testModel = deepCopy(defaultModel)
+    do ->
+      testModel.frames.zoom.width = 1000
+      testModel.frames.zoom.height = 447
+      #testModel.width = testModel.frames.normal.width = 1000
+      #testModel.height = testModel.frames.normal.height = 447
+      testModel.width = testModel.frames.normal.width = 500
+      testModel.height = testModel.frames.normal.height = 223
+      for i in [1..52] by 1
+        testModel.frames.normal.urls.push "/testdata/#{i}.jpg"
+        #testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
+        testModel.frames.zoom.urls.push "/testdata/#{i}.jpg"
 
   #{{{2 View
   #
@@ -222,13 +284,9 @@ if !isNodeJs
     @updateReq = true
     self = this
     setTimeout (-> self._update(); self.updateReq = false), 0
-  if runTest
-    lastUpdateTime = undefined
 
   View.prototype._update = ->
-    if runTest
-      log "update after #{+(new Date()) - lastUpdateTime}ms"
-      lastUpdateTime = +(new Date())
+    log "View#_update"
     @_fullscreen()
     @_root()
     @_logo()
@@ -302,19 +360,8 @@ if !isNodeJs
 
   #{{{3 test
   if runTest
-    testModel = deepCopy(defaultModel)
     testView = undefined
     do ->
-      testModel.frames.zoom.width = 1000
-      testModel.frames.zoom.height = 447
-      #testModel.width = testModel.frames.normal.width = 1000
-      #testModel.height = testModel.frames.normal.height = 447
-      testModel.width = testModel.frames.normal.width = 500
-      testModel.height = testModel.frames.normal.height = 223
-      for i in [1..52] by 1
-        #testModel.frames.normal.urls.push "/testdata/#{i}.jpg"
-        testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
-        testModel.frames.zoom.urls.push "/testdata/#{i}.jpg"
       t0 = +(new Date())
       testView = new View(testModel, "threesixtyproduct")
       t1 = +(new Date())
@@ -329,9 +376,15 @@ if !isNodeJs
   cacheFrames = (frameset, cb) ->
     frameset.loaded = []
     count = 0
+    log "caching frameset", frameset.urls[0]
     for i in [0..frameset.urls.length - 1]
       img = new Image()
-      img.onload = ((i) -> -> frameset.loaded[i] = +(new Date()); (cb?() if ++count == frameset.urls.length))(i)
+      img.onload = ((i) -> ->
+          frameset.loaded[i] = +(new Date())
+          if ++count == frameset.urls.length
+            log "done caching frameset", frameset.urls[0]
+            cb?()
+        )(i)
       img.src = frameset.urls[i]
 
   #{{{3 Incremental load
@@ -362,10 +415,11 @@ if !isNodeJs
       if (model.frames.current == lastSetFrame) && (model.frames.current < model.frames.normal.urls.length - 1)
         setTimeout incrementalUpdate, 0
       else
-        cb()
+        log "finished incremental load animation"
 
     if model.spinOnLoadFPS
-      cacheFrames model.frames.normal, -> log "loaded #{+new Date() - t0}"
+      cacheFrames model.frames.normal
+      log "starting incremental load animation"
       incrementalUpdate()
     else
       cacheFrames model.frames.normal cb
@@ -387,18 +441,24 @@ if isNodeJs
     res.header 'Cache-Control', "max-age=30, public"
     next()
   app.use express.static __dirname
+  lastTime = 0
   app.use "/api", (req, res, next) ->
     data = ""
     req.on "data", (d) -> data += d
     req.on "end", ->
-      res.header 'Access-Control-Allow-Origin', "*"
-      res.header 'Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE'
-      res.header 'Access-Control-Allow-Headers', 'Content-Type'
-      console.log req.originalUrl, data
-      res.json {ok:true}
+      res.header 'Access-Control-Allow-Origin', req.headers.origin || "*"
+      res.header 'Access-Control-Max-Age', 0
+      res.header 'Access-Control-Allow-Credentials', true
+      res.header "Content-Type", "text/plain"
+      res.json "{\"ok\":true}"
       res.end()
-
-
+      try
+        console.log req.originalUrl
+        for event in JSON.parse data
+          console.log event[0] - lastTime, event
+          lastTime = event[0]
+      catch e
+        console.log e
 
   port = 4444
   app.listen port
