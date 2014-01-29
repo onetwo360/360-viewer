@@ -90,21 +90,81 @@ if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
   root.runTest = true if typeof runTest == "undefined"
 
 #{{{2 Testing
-if runTest
-  if isNodeJs
-    testcount = 0
-  else
-    testcount = 6
+if runTest && !isNodeJs
+  testcount = 6
   currentTestId = 0
   console.log "1..#{testcount}"
+  testDone = 0
   expect = (expected, result, description) ->
     if JSON.stringify(expected) == JSON.stringify(result)
       console.log "ok #{++currentTestId} #{description || ""}"
+      log "test ok", currentTestId, description, expected
     else
       console.log "not ok #{++currentTestId} + #{description || ""}" +
         "expected:#{JSON.stringify expected}" +
         "got:#{JSON.stringify result}"
+      log "test failed", currentTestId, description, expected, result
+    ++testDone
+    if testDone == testcount
+      log "tests done"
+      syncLog()
  
+#{{{2 log
+if !isNodeJs
+  #
+  # We want to send logging and statistics to server, 
+  # but not drain battery nor exhaust the network,
+  # so the log is saved to memory, and then only send across the network 
+  # when more than `logBeforeSync` entries has been collected, 
+  # or the user leaves the page. It is also throttled, 
+  # so logging data are sent no more than once every `syncDelay` milliseconds.
+  #
+  # On legacy browsers we cannot send the log when the user leave the page,
+  # so there we just send update every `syncDelay` milliseconds.
+  #
+  log = undefined
+  syncLog = undefined
+  do ->
+    logId = Math.random()
+    logUrl = "/api/log"
+    logData = []
+    logSyncing = false
+    logsBeforeSync = 200
+    syncDelay = 400
+    syncLog = ->
+      if !logSyncing
+        try
+          logContent = JSON.stringify logData
+        catch e
+          logContent = "Error stringifying log"
+        logSyncing = logData
+        logData = []
+        ajax logUrl, logContent, (err, result) ->
+          setTimeout (-> logSyncing = false), syncDelay
+          if err
+            log "logsync error", err
+            logData = logSyncing.concat(logData)
+          else
+            logData.push [+(new Date()), "log sync'ed", logId]
+            syncLog() if legacy && logData.length > 1
+
+    log = (args...) ->
+      logData.push [+(new Date()), args...]
+      syncLog() if logData.length > logsBeforeSync || legacy
+
+    setTimeout (->
+      elemAddEventListener window, "error", -> log "window.onerror", err?.message
+      elemAddEventListener window, "beforeunload", ->
+        log "window.beforeunload"
+        try
+          ajax logUrl, JSON.stringify logData # blocking POST request
+        catch e
+          undefined
+        undefined
+    ), 0
+    log "starting", logId, window.performance
+
+
 #{{{2 utility
 if !isNodeJs
   #{{{3 shim
@@ -167,58 +227,6 @@ if !isNodeJs
       elem.addEventListener type, fn, false
     else
       elem.attachEvent "on"+type, fn
-
-  #{{{3 log
-  #
-  # We want to send logging and statistics to server, 
-  # but not drain battery nor exhaust the network,
-  # so the log is saved to memory, and then only send across the network 
-  # when more than `logBeforeSync` entries has been collected, 
-  # or the user leaves the page. It is also throttled, 
-  # so logging data are sent no more than once every `syncDelay` milliseconds.
-  #
-  # On legacy browsers we cannot send the log when the user leave the page,
-  # so there we just send update every `syncDelay` milliseconds.
-  #
-  log = undefined
-  do ->
-    logId = Math.random()
-    logUrl = "/api/log"
-    logData = []
-    logSyncing = false
-    logsBeforeSync = 200
-    syncDelay = 400
-    trySync = ->
-      if !logSyncing
-        try
-          logContent = JSON.stringify logData
-        catch e
-          logContent = "Error stringifying log"
-        logSyncing = logData
-        logData = []
-        ajax logUrl, logContent, (err, result) ->
-          setTimeout (-> logSyncing = false), syncDelay
-          if err
-            log "logsync error", err
-            logData = logSyncing.concat(logData)
-          else
-            logData.push [+(new Date()), "log sync'ed", logId]
-            trySync() if legacy && logData.length > 1
-
-    log = (args...) ->
-      logData.push [+(new Date()), args...]
-      trySync() if logData.length > logsBeforeSync || legacy
-
-    elemAddEventListener window, "error", -> log "window.onerror", err?.message
-    elemAddEventListener window, "beforeunload", ->
-      log "window.beforeunload"
-      try
-        ajax logUrl, JSON.stringify logData # blocking POST request
-      catch e
-        undefined
-      undefined
-    log "starting", logId, window.performance
-
 
 #{{{2 Model
 if !isNodeJs
@@ -572,6 +580,9 @@ if isNodeJs
         for event in JSON.parse data
           console.log event[0] - lastTime, event
           lastTime = event[0]
+          if process.argv[2] == "test"
+            process.exit 1 if event[1] == "test failed"
+            process.exit 0 if event[1] == "tests done"
       catch e
         console.log e
 
