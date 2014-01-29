@@ -20,8 +20,8 @@ Viewer client for http://onetwo360.com/
 - in progress
   - move technical documentation into relevant parts of source
   - major rewrite - getting features from previous milestones to work
-  - unit testing, and continous integration with travis and testling
 - 0.1.0 - January/February 2014
+  - unit testing and continous integration with travis and testling
   - better decoupling of model, view and control
   - support for sending statistics/logging to server
   - automatic removal of tests and development code from production version (via uglify-js)
@@ -466,13 +466,13 @@ borderBottomRightRadius: (zoomSize/5)
         setTimeout (-> self._update(); self.updateReq = false), 0
     
       View.prototype._update = ->
-        log "View#_update"
         @_fullscreen()
         @_root()
         @_logo()
         @_zoomLens()
         @_image()
         @_applyStyle()
+        log "View#_update'd"
     
 
 ### private utility functions for updating the view
@@ -602,6 +602,7 @@ backgroundSize: "#{@width}px #{@height}px"
                 lastSetFrame = model.frames.current = Math.min(count - 1, model.frames.current + 1)
                 lastTime += frameTime
               lastTime = now
+              log "incremental load animation", lastSetFrame
               view.update()
     
           if (model.frames.current == lastSetFrame) && (model.frames.current < model.frames.normal.urls.length - 1)
@@ -627,8 +628,16 @@ backgroundSize: "#{@width}px #{@height}px"
 
 ## User interaction/touch
 
-      elemAddEventListener document, "mousemove", (e) -> log "mousemove", e.clientX, e.clientY
-      elemAddEventListener document, "touchmove", (e) -> log "touchmove", e.touches
+      handleInteraction = (model, view) ->
+        elemAddEventListener document, "mousemove", (e) ->
+          log "mousemove", e.clientX, e.clientY
+          model.frames.current = (e.clientX / 20 |0) % model.frames.normal.urls.length
+          view.update()
+        elemAddEventListener document, "touchmove", (e) -> log "touchmove", e.touches
+    
+      if runTest
+        handleInteraction testModel, testView
+    
     
 
 ## main
@@ -647,7 +656,7 @@ backgroundSize: "#{@width}px #{@height}px"
         res.header 'Cache-Control', "max-age=30, public"
         next()
       app.use express.static __dirname
-      lastTime = 0
+      startTime = +(new Date())
       app.use "/api", (req, res, next) ->
         data = ""
         req.on "data", (d) -> data += d
@@ -661,8 +670,9 @@ backgroundSize: "#{@width}px #{@height}px"
           try
             console.log req.originalUrl
             for event in JSON.parse data
-              console.log event[0] - lastTime, event
-              lastTime = event[0]
+              console.log (event[0] - startTime) / 1000, event
+              if event[1] == "starting"
+                startTime = event[0]
               if process.argv[2] == "test"
                 process.exit 1 if event[1] == "test failed"
                 process.exit 0 if event[1] == "tests done"
