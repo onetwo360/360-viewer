@@ -64,8 +64,6 @@ Widget for showing OneTwo360 images/animations
 - thumbnails when few pictures (maybe instead of drag)
 - smoother animate on load
 
-
-
 ## Technical approach
 
 ### Rendering
@@ -98,13 +96,7 @@ which we also need to support.
   - current frame
   - 
 # Literate source code
-
-    
-    
-    
-    
-
-# Minification
+## Minification
 
 define `isNodeJs` and `runTest` in such a way that they will be fully removed by `uglifyjs -mc -d isNodeJs=false -d runTest=false `
 
@@ -115,7 +107,7 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
       root.runTest = true if typeof runTest == "undefined"
     
 
-# Testing
+## Testing
 
     if runTest
       if isNodeJs
@@ -133,11 +125,10 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
             "got:#{JSON.stringify result}"
      
 
-# Version 2
+## utility
 
     if !isNodeJs
 
-## utility
 ### shim
 
       Object.keys ?= (obj) -> (key for key, _ of obj)
@@ -254,6 +245,9 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
 
 ## Model
 
+    if !isNodeJs
+
+
 The model is just a json object that is passed around. This has all the state for the onetwo360 viewer
 
 
@@ -307,6 +301,9 @@ testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
     
 
 ## View
+
+    if !isNodeJs
+
 
 The html of the view is static, only updated through css-changes. 
 
@@ -534,6 +531,7 @@ backgroundSize: "#{@width}px #{@height}px"
 
 ## Loader / caching
 
+    if !isNodeJs
      
 
 ### Cache frames
@@ -602,10 +600,11 @@ backgroundSize: "#{@width}px #{@height}px"
 
 ## main
 
+    if !isNodeJs
       window.onetwo360 = (cfg) ->
         undefined
 
-# Dummy/test-server
+## Dummy/test-server
 
     if isNodeJs
       express = require "express"
@@ -638,97 +637,7 @@ backgroundSize: "#{@width}px #{@height}px"
       console.log "devserver running on port #{port}"
     
 
-# Documentation
-## Roadmap
-### Done
-
-#### Milestone 2 - December 2013 / January 2014
-
-- log util, sending log to server
-- locally cached development data for easier development / automated testing
-- requestAnimationFrame for smoother animation
-- open source - available on github
-- use solapp for automatic minification and easier development
-
-#### Milestone 1 - October/November 2013
-
-- avoid moving zoom-lens beyond image / constraint on edge
-- allow interaction during rotate
-- connect with API
-- gif spinner indicator
-- logo on top with fade-out 
-- zoom button
-- fullscreen button
-- fullscreen(on both desktop and mobile)
-- dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
-
-#### Milestone 0 - September 2013
-
-- Version up and running
-- Browser-support: IE8+, iOS 5+ Android 4+
-- Rotate on drag
-- Handle touch and mouse
-- Zoom-lens effect(on desktop+mobile)
-- Zoom on click (on desktop) and on hold (on mobile)
-- Cursor icon
-- Image caching / preloader
-- Animate on load
-
-### TODO
-#### Initial version
-
-- refactor
-- collect statistics
-- fix android full-screen issues
-- IE - test
-  - IE8 issues: zoom lense not working as we are using css positioned background
-
-#### Future
-
-- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
-- customer logo(postponed due to no customer logo links in sample data from the api)
-- labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
-- fullscreen issues on android when user-scaleable
-- maybe close fullscreen on click outside image
-- test/make sure it works also wit small data sets of 1 picture
-- icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
-- animate during load, instead of animate on load
-- thumbnails when few pictures (maybe instead of drag)
-- smoother animate on load
-
-
-## Technical approach
-
-### Rendering
-
-When targeting mobile devices,
-and possibly several 360º views on a page,
-memory is more likely to be bottleneck than CPU.
-
-We therefore just preload the compressed images
-into the browsers component cache, 
-and decompress them at render time.
-
-The actual rendering is then just replacing
-the `src` of an image tag, - also making it work
-in non-HTML5 browsers, such as IE8, 
-which we also need to support.
-
-## Refactor notes
-
-- compatibility layer
-- element with 360-rotation
-  - current frame
-  - current-frame overlays (
-  - zoom lens
-  - general overlays
-- event handling
-- cache handling
-
-- model
-  - current frame
-  - 
-# Literate source code
+# Old version (code not run, still here for reference for a while)
 The globalDefines sets `isTesting`, `isDevServer` and `isNodeJs` predicates which can be used for conditional code, ie. code present in the file used for test and development that will be removed from the production build. The line wil automatically be removed in production builds
 
     require("solapp").globalDefines global if typeof isNodeJs != "boolean"

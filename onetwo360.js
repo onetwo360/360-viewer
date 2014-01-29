@@ -212,6 +212,9 @@
       });
       return log("starting", logId, window.performance);
     })();
+  }
+
+  if (!isNodeJs) {
     defaultModel = {
       frames: {
         current: 0,
@@ -256,6 +259,9 @@
         return _results;
       })();
     }
+  }
+
+  if (!isNodeJs) {
     View = function(model, domId) {
       var buttonStyle, domElem, elemNames, i, key, _, _i, _ref, _ref1;
       this.model = model;
@@ -470,6 +476,9 @@
         return testView.update();
       })();
     }
+  }
+
+  if (!isNodeJs) {
     cacheFrames = function(frameset, cb) {
       var count, i, img, _i, _ref, _results;
       frameset.loaded = [];
@@ -542,6 +551,9 @@
         return log("spinned " + (+new Date() - t0));
       });
     }
+  }
+
+  if (!isNodeJs) {
     window.onetwo360 = function(cfg) {
       return void 0;
     };

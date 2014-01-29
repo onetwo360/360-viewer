@@ -1,4 +1,94 @@
-#{{{1 Minification
+#{{{1 Documentation
+#{{{2 Roadmap
+#{{{3 Done
+# 
+#{{{4 Milestone 2 - December 2013 / January 2014
+#
+# - log util, sending log to server
+# - locally cached development data for easier development / automated testing
+# - requestAnimationFrame for smoother animation
+# - open source - available on github
+# - use solapp for automatic minification and easier development
+#
+#{{{4 Milestone 1 - October/November 2013
+#
+# - avoid moving zoom-lens beyond image / constraint on edge
+# - allow interaction during rotate
+# - connect with API
+# - gif spinner indicator
+# - logo on top with fade-out 
+# - zoom button
+# - fullscreen button
+# - fullscreen(on both desktop and mobile)
+# - dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
+# 
+#{{{4 Milestone 0 - September 2013
+# 
+# - Version up and running
+# - Browser-support: IE8+, iOS 5+ Android 4+
+# - Rotate on drag
+# - Handle touch and mouse
+# - Zoom-lens effect(on desktop+mobile)
+# - Zoom on click (on desktop) and on hold (on mobile)
+# - Cursor icon
+# - Image caching / preloader
+# - Animate on load
+#
+#{{{3 TODO
+#{{{4 Initial version
+# 
+# - refactor
+# - collect statistics
+# - fix android full-screen issues
+# - IE - test
+#   - IE8 issues: zoom lense not working as we are using css positioned background
+# 
+#{{{4 Future
+# 
+# - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
+# - customer logo(postponed due to no customer logo links in sample data from the api)
+# - labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
+# - fullscreen issues on android when user-scaleable
+# - maybe close fullscreen on click outside image
+# - test/make sure it works also wit small data sets of 1 picture
+# - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
+# - animate during load, instead of animate on load
+# - thumbnails when few pictures (maybe instead of drag)
+# - smoother animate on load
+# 
+#{{{2 Technical approach
+#
+#{{{3 Rendering
+#
+# When targeting mobile devices,
+# and possibly several 360º views on a page,
+# memory is more likely to be bottleneck than CPU.
+# 
+# We therefore just preload the compressed images
+# into the browsers component cache, 
+# and decompress them at render time.
+# 
+# The actual rendering is then just replacing
+# the `src` of an image tag, - also making it work
+# in non-HTML5 browsers, such as IE8, 
+# which we also need to support.
+#
+#{{{2 Refactor notes
+#
+# - compatibility layer
+# - element with 360-rotation
+#   - current frame
+#   - current-frame overlays (
+#   - zoom lens
+#   - general overlays
+# - event handling
+# - cache handling
+#
+# - model
+#   - current frame
+#   - 
+#{{{1 Literate source code
+#{{{2 Minification
 #
 # define `isNodeJs` and `runTest` in such a way that they will be fully removed by `uglifyjs -mc -d isNodeJs=false -d runTest=false `
 #
@@ -7,7 +97,7 @@ if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
   root.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
   root.runTest = true if typeof runTest == "undefined"
 
-#{{{1 Testing
+#{{{2 Testing
 if runTest
   if isNodeJs
     testcount = 0
@@ -23,9 +113,8 @@ if runTest
         "expected:#{JSON.stringify expected}" +
         "got:#{JSON.stringify result}"
  
-#{{{1 Version 2
+#{{{2 utility
 if !isNodeJs
-  #{{{2 utility
   #{{{3 shim
   Object.keys ?= (obj) -> (key for key, _ of obj)
   #{{{3 ajax
@@ -128,7 +217,8 @@ if !isNodeJs
     log "starting", logId, window.performance
 
 
-  #{{{2 Model
+#{{{2 Model
+if !isNodeJs
   #
   # The model is just a json object that is passed around. This has all the state for the onetwo360 viewer
   #
@@ -173,6 +263,7 @@ if !isNodeJs
         testModel.frames.zoom.urls.push "/testdata/#{i}.jpg"
 
   #{{{2 View
+if !isNodeJs
   #
   # The html of the view is static, only updated through css-changes. 
   #
@@ -371,6 +462,7 @@ if !isNodeJs
 
 
   #{{{2 Loader / caching
+if !isNodeJs
  
   #{{{3 Cache frames
   cacheFrames = (frameset, cb) ->
@@ -431,9 +523,10 @@ if !isNodeJs
     incrementalLoad testModel, testView, -> log "spinned #{+new Date() - t0}"
 
   #{{{2 main
+if !isNodeJs
   window.onetwo360 = (cfg) ->
     undefined
-#{{{1 Dummy/test-server
+#{{{2 Dummy/test-server
 if isNodeJs
   express = require "express"
   app = express()
