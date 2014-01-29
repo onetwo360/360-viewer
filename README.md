@@ -6,80 +6,72 @@ Widget for showing OneTwo360 images/animations
 [![browser support](https://ci.testling.com/onetwo360/360-viewer.png)](http://ci.testling.com/onetwo360/360-viewer)
 
 
-# Documentation
-## Roadmap
-### Done
+Viewer client for http://onetwo360.com/
 
-#### Milestone 2 - December 2013 / January 2014
+# Status
 
-- log util, sending log to server
-- locally cached development data for easier development / automated testing
-- requestAnimationFrame for smoother animation
-- open source - available on github
-- use solapp for automatic minification and easier development
+## Current progress
 
-#### Milestone 1 - October/November 2013
-
-- avoid moving zoom-lens beyond image / constraint on edge
-- allow interaction during rotate
-- connect with API
-- gif spinner indicator
-- logo on top with fade-out 
-- zoom button
-- fullscreen button
-- fullscreen(on both desktop and mobile)
-- dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
-
-#### Milestone 0 - September 2013
-
-- Version up and running
-- Browser-support: IE8+, iOS 5+ Android 4+
-- Rotate on drag
-- Handle touch and mouse
-- Zoom-lens effect(on desktop+mobile)
-- Zoom on click (on desktop) and on hold (on mobile)
-- Cursor icon
-- Image caching / preloader
-- Animate on load
-
-### TODO
-#### Initial version
-
-- refactor
-- collect statistics
-- fix android full-screen issues
-- IE - test
+- backlog-current
+  - fix android full-screen issues
   - IE8 issues: zoom lense not working as we are using css positioned background
+  - ensure portability IE/8+,Android/2.3+,iOS/6+,Opera/12+,Chrome,Firefox,Safari
+  - more documentation
+- in progress
+  - move technical documentation into relevant parts of source
+  - major rewrite - getting features from previous milestones to work
+  - unit testing, and continous integration with travis and testling
+- 0.1.0 - January/February 2014
+  - better decoupling of model, view and control
+  - support for sending statistics/logging to server
+  - automatic removal of tests and development code from production version (via uglify-js)
+  - optimise "Animate on load" to run during load, - increasing perceived load performance significantly
 
-#### Future
+## Changelog
 
-- multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
-- customer logo(postponed due to no customer logo links in sample data from the api)
-- labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
-- fullscreen issues on android when user-scaleable
-- maybe close fullscreen on click outside image
-- test/make sure it works also wit small data sets of 1 picture
-- icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
-- animate during load, instead of animate on load
-- thumbnails when few pictures (maybe instead of drag)
-- smoother animate on load
+- 0.0.0-MILESTONE-2 - December 2013 / January 2014
+  - log util, sending log to server
+  - locally cached development data for easier development / automated testing
+  - requestAnimationFrame for smoother animation
+  - open source - available on github
+  - use solapp for automatic minification and easier development
+- 0.0.0-MILESTONE-1 - October/November 2013
+  - avoid moving zoom-lens beyond image / constraint on edge
+  - allow interaction during rotate
+  - connect with API
+  - gif spinner indicator
+  - logo on top with fade-out 
+  - zoom button
+  - fullscreen button
+  - fullscreen(on both desktop and mobile)
+  - dynamic load hi-res images (on fullscreen after .5s same image + zoom use scaled lo-res when starting) + recache lo-res
+- 0.0.0-MILESTONE-0 - September 2013
+  - Version up and running
+  - Browser-support: IE8+, iOS 5+ Android 4+
+  - Rotate on drag
+  - Handle touch and mouse
+  - Zoom-lens effect(on desktop+mobile)
+  - Zoom on click (on desktop) and on hold (on mobile)
+  - Cursor icon
+  - Image caching / preloader
+  - Animate on load
 
-## Technical approach
+## Backlog
 
-### Rendering
+- next
+  - icons not requiring full font-awesome
+  - bower-publish
+- later
+  - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
+  - customer logo(postponed due to no customer logo links in sample data from the api)
+  - labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
+  - fullscreen issues on android when user-scaleable
+  - maybe close fullscreen on click outside image
+  - test/make sure it works also wit small data sets of 1 picture
+  - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
+  - thumbnails when few pictures (maybe instead of drag)
 
-When targeting mobile devices,
-and possibly several 360º views on a page,
-memory is more likely to be bottleneck than CPU.
 
-We therefore just preload the compressed images
-into the browsers component cache, 
-and decompress them at render time.
-
-The actual rendering is then just replacing
-the `src` of an image tag, - also making it work
-in non-HTML5 browsers, such as IE8, 
-which we also need to support.
 
 ## Refactor notes
 
@@ -202,6 +194,17 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
 
 ### log
 
+We want to send logging and statistics to server, 
+but not drain battery nor exhaust the network,
+so the log is saved to memory, and then only send across the network 
+when more than `logBeforeSync` entries has been collected, 
+or the user leaves the page. It is also throttled, 
+so logging data are sent no more than once every `syncDelay` milliseconds.
+
+On legacy browsers we cannot send the log when the user leave the page,
+so there we just send update every `syncDelay` milliseconds.
+
+
       log = undefined
       do ->
         logId = Math.random()
@@ -235,7 +238,7 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
         elemAddEventListener window, "beforeunload", ->
           log "window.beforeunload"
           try
-            ajax logUrl, JSON.stringify logData
+            ajax logUrl, JSON.stringify logData # blocking POST request
           catch e
             undefined
           undefined
@@ -304,6 +307,21 @@ testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
 
     if !isNodeJs
 
+## doc/notes
+
+When targeting mobile devices,
+and possibly several 360º views on a page,
+memory is more likely to be bottleneck than CPU.
+
+We therefore just preload the compressed images
+into the browsers component cache, 
+and decompress them at render time.
+(This is a time/space-tradeof).
+
+The actual rendering is just replacing
+the `src` of an image tag, - also making it work
+in non-HTML5 browsers, such as IE8, 
+which we also need to support.
 
 The html of the view is static, only updated through css-changes. 
 
@@ -532,7 +550,6 @@ backgroundSize: "#{@width}px #{@height}px"
 ## Loader / caching
 
     if !isNodeJs
-     
 
 ### Cache frames
 
@@ -598,10 +615,17 @@ backgroundSize: "#{@width}px #{@height}px"
         incrementalLoad testModel, testView, -> log "spinned #{+new Date() - t0}"
     
 
+## User interaction/touch
+
+      elemAddEventListener document, "mousemove", (e) -> log "mousemove", e.clientX, e.clientY
+      elemAddEventListener document, "touchmove", (e) -> log "touchmove", e.touches
+    
+
 ## main
 
     if !isNodeJs
       window.onetwo360 = (cfg) ->
+        console.log "HERE"
         undefined
 
 ## Dummy/test-server

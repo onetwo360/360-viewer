@@ -551,10 +551,17 @@
         return log("spinned " + (+new Date() - t0));
       });
     }
+    elemAddEventListener(document, "mousemove", function(e) {
+      return log("mousemove", e.clientX, e.clientY);
+    });
+    elemAddEventListener(document, "touchmove", function(e) {
+      return log("touchmove", e.touches);
+    });
   }
 
   if (!isNodeJs) {
     window.onetwo360 = function(cfg) {
+      console.log("HERE");
       return void 0;
     };
   }
