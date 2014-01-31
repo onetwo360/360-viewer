@@ -226,7 +226,7 @@ if !isNodeJs
         catch e
           undefined
         undefined
-      log "starting", logId, window.performance
+    log "starting", logId, window.performance
 
 
 #{{{2 Model
@@ -251,9 +251,10 @@ if !isNodeJs
     zoom:
       lensSize: 200
       enabled: false
-      # x/y-position on image normalised in [0;1]
       x: undefined
       y: undefined
+    showLogo: true
+    loading: true
     domElem:
       width: undefined
       height: undefined
@@ -270,8 +271,8 @@ if !isNodeJs
       testModel.width = testModel.frames.normal.width = 500
       testModel.height = testModel.frames.normal.height = 223
       for i in [1..52] by 1
-        testModel.frames.normal.urls.push "/testdata/#{i}.jpg"
-        #testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
+        #testModel.frames.normal.urls.push "/testdata/#{i}.jpg"
+        testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
         testModel.frames.zoom.urls.push "/testdata/#{i}.jpg"
 
   #{{{2 View
@@ -333,7 +334,7 @@ if !isNodeJs
         opacity: "0.7"
         textShadow: "0px 0px 5px white"
         color: "#333"
-        transition: "opacity 1s"
+        transition: "opacity 0.5s"
       btnFull:
         left: "90%"
       btnZoom:
@@ -374,7 +375,7 @@ if !isNodeJs
     #{{{4 Properties that will be initialised later
     @width = undefined
     @height = undefined
-    @logoFade = undefined
+    @showLogo= undefined
     @imgSrc = undefined
 
     #{{{4 Data structure for optimised style update
@@ -401,7 +402,7 @@ if !isNodeJs
   View.prototype._update = ->
     @_fullscreen()
     @_root()
-    @_logo()
+    @_overlays()
     @_zoomLens()
     @_image()
     @_applyStyle()
@@ -416,6 +417,8 @@ if !isNodeJs
         left: 0
         width: (@width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth)
         height: (@height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight)
+      @top = 0
+      @left = 0
     else
       extend @style.root,
         position: "relative"
@@ -423,28 +426,63 @@ if !isNodeJs
         left: 0
         width: (@width = @defaultWidth)
         height: (@height = @defaultHeight)
+      boundingRect = @elems.root.getBoundingClientRect()
+      @top = boundingRect.top
+      @left = boundingRect.left
+    extend @style.image,
+      width: @width
+      height: @height
 
   View.prototype._root = -> #{{{4
     undefined
     #extend @style.root,
       #backgroundImage: "url(#{@model.frames.normal.urls[@model.frames.current]})"
       #backgroundSize: "#{@width}px #{@height}px"
+      
+  View.prototype._overlays = -> #{{{4
+    @style.spinner.display = if @model.loading then "block" else "none"
 
-  View.prototype._logo = -> #{{{4
-        top: @height*.35 + "px"
-        left: @width*.25  + "px"
-        fontSize: @height*.2 + "px"
+    extend @style.logo,
+      top: @height*.35
+      left: @width*.5 - @height*.3
+      fontSize: @height*.2
+      opacity: if @model.showLogo then "1" else "0"
+    extend @style.btnFull,
+      fontSize: @height * .08
+      padding: @height * .02
+    extend @style.btnZoom,
+      fontSize: @height * .08
+      padding: @height * .02
+
   View.prototype._zoomLens = -> #{{{4
     if @model.zoom.enabled
       current = @model.frames.current
-      imgs = @model.frames.zoom # TODO only if current is loaded, else use @model.frames.normal
+
+      url = @model.frames.zoom.urls[current]
+      w = @model.frames.zoom.width
+      h = @model.frames.zoom.height
+      size = @model.zoom.lensSize
+
+      img = new Image()
+      img.src = url
+      if !img.complete
+        img.onload = =>
+          console.log "zoom loaded", img.width, img.height
+          @update()
+        url = @model.frames.normal.urls[current]
+
+      left = Math.max(0, Math.min(@width, @model.zoom.x - @left))
+      top = Math.max(0, Math.min(@height, @model.zoom.y - @top))
+      bgX = -left/@width * (w + size) + size/2
+      bgY = -top/@height * (h + size) + size/2
+      console.log left/@width, top/@height, bgX, bgY
       extend @style.zoomLens,
         display: "block"
-        left: 123
-        top: 123
-        backgroundImage: "url(#{imgs.urls[current]})" 
-        backgroundSize: "#{imgs.width}px #{imgs.height}px"
-        backgroundPosition: "#{123}px #{123}px"
+        left: left - size/2
+        top: top - size/2
+        backgroundImage: "url(#{url})"
+        backgroundSize: "#{w + size}px #{h + size}px"
+        backgroundPosition: "#{bgX}px #{bgY}px"
     else
       extend @style.zoomLens,
         display: "none"
@@ -532,11 +570,14 @@ if !isNodeJs
         log "finished incremental load animation"
 
     if model.spinOnLoadFPS
-      cacheFrames model.frames.normal
+      cacheFrames model.frames.normal, -> model.loading = false; view.update()
       log "starting incremental load animation"
       incrementalUpdate()
     else
-      cacheFrames model.frames.normal cb
+      cacheFrames model.frames.normal ->
+        model.loading = false
+        view.update()
+        cb()
 
 
   t0 = +new Date()
@@ -552,6 +593,14 @@ if !isNodeJs
 # 
   tapLength = 500
   tapDist2 = 10*10
+  ontouch = (elem, callback) -> #{{{3
+    elemAddEventListener elem, "mousedown", (e) ->
+      e.preventDefault?()
+      callback()
+    elemAddEventListener elem, "touchstart", (e) -> 
+      e.preventDefault?()
+      callback()
+
   TouchHandler = (elem) -> #{{{3
     self = this
     condCall = (fn) -> (e) ->
@@ -591,7 +640,7 @@ if !isNodeJs
     @x0 = @x = e.clientX; @y0 = @y = e.clientY
     @onstart?()
     @_update e
-    self = this; setTimeout (-> self._holdTimeout()), tapLength
+    setTimeout (=> @_holdTimeout()), tapLength
     true
 
   TouchHandler.prototype._holdTimeout = -> #{{{3
@@ -624,12 +673,31 @@ if !isNodeJs
   if runTest then do ->
     testStartFrame = undefined
     testTouchHandler.onstart = ->
+      testModel.showLogo = false
       testStartFrame = testModel.frames.current
       log "onstart", @x, testModel.frames.current
-    testTouchHandler.onmove = ->
+      testView.update()
+    rotate = ->
       testModel.frames.current = (testStartFrame + (@dx / 10)>>>0) % testModel.frames.normal.urls.length
       log "onmove", @x, @dx, testModel.frames.current
       testView.update()
+    testTouchHandler.onmove = rotate
+    testTouchHandler.onhold = ->
+      testModel.zoom.enabled = true
+      testModel.zoom.x = @x
+      testModel.zoom.y = @y
+      testView.update()
+      testTouchHandler.onmove = ->
+        testModel.zoom.x = @x
+        testModel.zoom.y = @y
+        testView.update()
+      testTouchHandler.onend = ->
+        testTouchHandler.onmove = rotate
+        testModel.zoom.enabled = false
+        testView.update()
+        testTouchHandler.onend = undefined
+
+
     
 #{{{2 Dummy/test-server
 if isNodeJs
