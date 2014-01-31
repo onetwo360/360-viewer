@@ -145,15 +145,17 @@ if !isNodeJs
             log "logsync error", err
             logData = logSyncing.concat(logData)
           else
-            logData.push [+(new Date()), "log sync'ed", logId]
-            syncLog() if legacy && logData.length > 1
+            logData.push [+(new Date()), "log sync'ed", logId, logData.length]
+            syncLog() if (legacy || runTest) && logData.length > 1
 
     log = (args...) ->
       logData.push [+(new Date()), args...]
-      syncLog() if logData.length > logsBeforeSync || legacy
+      syncLog() if logData.length > logsBeforeSync || legacy || runTest
 
     setTimeout (->
-      elemAddEventListener window, "error", -> log "window.onerror", err?.message
+      elemAddEventListener window, "error", (err) ->
+        console.log err
+        log "window.onerror ", String(err)
       elemAddEventListener window, "beforeunload", ->
         log "window.beforeunload"
         try
@@ -161,8 +163,8 @@ if !isNodeJs
         catch e
           undefined
         undefined
+      log "starting", logId, window.performance
     ), 0
-    log "starting", logId, window.performance
 
 
 #{{{2 Utility
@@ -306,6 +308,8 @@ if !isNodeJs
     #{{{4 Style
     @style =
       root:
+        webkitTapHighlightColor: "rgba(0,0,0,0)"
+        webkitUserSelect: "none"
         display: "inline-block"
         cursor: "url(res/cursor_rotate.cur),move"
       # NB: order of the following keys needs to be the exactly same as the children of the dom root node
@@ -553,7 +557,6 @@ if !isNodeJs
     self = this
     condCall = (fn) -> (e) ->
       return undefined if !self.touching
-      log "here"
       e.preventDefault?()
       fn.call self, e.touches?[0] || e
 
@@ -589,6 +592,7 @@ if !isNodeJs
     @onstart?()
     @_update e
     self = this; setTimeout (-> self._holdTimeout()), tapLength
+    false
 
   TouchHandler.prototype._holdTimeout = -> #{{{3
     if @touching && !@holding && @maxDist2 < tapDist2
@@ -616,14 +620,27 @@ if !isNodeJs
   #{{{2 main
 if !isNodeJs
   window.onetwo360 = (cfg) ->
-    console.log "HJERE"
     undefined
+  if runTest then do ->
+    testStartFrame = undefined
+    testTouchHandler.onstart = ->
+      testStartFrame = testModel.frames.current
+      log "onstart", @x, testModel.frames.current
+    testTouchHandler.onmove = ->
+      testModel.frames.current = (testStartFrame + (@dx / 10)>>>0) % testModel.frames.normal.urls.length
+      log "onmove", @x, @dx, testModel.frames.current
+      testView.update()
+    
 #{{{2 Dummy/test-server
 if isNodeJs
   express = require "express"
   app = express()
   app.use (req, res, next) ->
-    res.header 'Cache-Control', "max-age=3600, public"
+    console.log req.originalUrl
+    next()
+  app.use "/testdata", (req, res, next) ->
+    res.header 'Expires', (new Date(+new Date +  3600*1000)).toUTCString()
+    res.header 'Cache-Control', "public"
     next()
   app.use express.static __dirname
   startTime = +(new Date())
@@ -638,7 +655,6 @@ if isNodeJs
       res.json "{\"ok\":true}"
       res.end()
       try
-        console.log req.originalUrl
         for event in JSON.parse data
           console.log (event[0] - startTime) / 1000, event
           if event[1] == "starting"
