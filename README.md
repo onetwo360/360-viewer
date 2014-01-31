@@ -465,7 +465,7 @@ borderBottomRightRadius: (zoomSize/5)
         @_zoomLens()
         @_image()
         @_applyStyle()
-        log "View#_update'd"
+        log "View#_update'd", @top, @left, @width, @height
     
 
 ### private utility functions for updating the view
@@ -474,10 +474,26 @@ borderBottomRightRadius: (zoomSize/5)
         if @model.fullscreen
           extend @style.root,
             position: "absolute"
-            top: 0
-            left: 0
+            top: window.scrollY
+            left: window.scrollX
             width: (@width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth)
             height: (@height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight)
+          imWidth = @model.frames.normal.width
+          imHeight = @model.frames.normal.height
+          imRatio = imWidth/imHeight
+          ratio = @width/@height
+          if @width/@height > imRatio
+            extend @style.image,
+              top: 0
+              left: (ratio - imRatio)/2 * @width
+              width: @width * imRatio/ratio
+              height: @height
+          else
+            extend @style.image,
+              top: 0
+              left: 0
+              width: @width
+              height: @height * ratio/imRatio
           @top = 0
           @left = 0
         else
@@ -487,12 +503,14 @@ borderBottomRightRadius: (zoomSize/5)
             left: 0
             width: (@width = @defaultWidth)
             height: (@height = @defaultHeight)
+          extend @style.image,
+            top: 0
+            left: 0
+            width: @width
+            height: @height
           boundingRect = @elems.root.getBoundingClientRect()
           @top = boundingRect.top
           @left = boundingRect.left
-        extend @style.image,
-          width: @width
-          height: @height
     
       View.prototype._root = -> #{{{4
         undefined
@@ -671,10 +689,10 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
       ontouch = (elem, callback) -> #{{{3
         elemAddEventListener elem, "mousedown", (e) ->
           e.preventDefault?()
-          callback()
+          callback e
         elemAddEventListener elem, "touchstart", (e) -> 
           e.preventDefault?()
-          callback()
+          callback e
     
       TouchHandler = (elem) -> #{{{3
         self = this
@@ -688,8 +706,8 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         elemAddEventListener document, "touchmove", condCall @_move
         elemAddEventListener document, "mouseup", condCall @_end
         elemAddEventListener document, "touchend", condCall @_end
-        elemAddEventListener elem, "mousedown", (e) -> e.preventDefault?(); self._start e
-        elemAddEventListener elem, "touchstart", (e) -> e.preventDefault?(); self._start e.touches[0]
+        elemAddEventListener elem, "mousedown", (e) -> e.preventDefault?(); self.start e
+        elemAddEventListener elem, "touchstart", (e) -> e.preventDefault?(); self.start e.touches[0]
         @_reset()
         return this
     
@@ -707,7 +725,7 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         @maxDist2 = Math.max(@maxDist2, @dx*@dx + @dy*@dy)
         @time = +new Date - @startTime
         
-      TouchHandler.prototype._start = (e) -> #{{{3
+      TouchHandler.prototype.start = (e) -> #{{{3
         @_reset()
         @touching = true
         @isMouse = !e.touches
@@ -759,7 +777,7 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
           log "onmove", @x, @dx, testModel.frames.current
           testView.update()
         testTouchHandler.onmove = rotate
-        testTouchHandler.onhold = ->
+        startZoom = ->
           testModel.zoom.enabled = true
           testModel.zoom.x = @x
           testModel.zoom.y = @y
@@ -773,6 +791,14 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
             testModel.zoom.enabled = false
             testView.update()
             testTouchHandler.onend = undefined
+        testTouchHandler.onhold = startZoom
+        ontouch testView.elems.btnZoom, (e) ->
+          testTouchHandler.start e
+          startZoom.call testTouchHandler
+        ontouch testView.elems.btnFull, (e) ->
+          testModel.fullscreen = !testModel.fullscreen
+          testView.update()
+    
     
     
         
