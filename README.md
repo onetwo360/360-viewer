@@ -640,93 +640,62 @@ backgroundSize: "#{@width}px #{@height}px"
     
 
 ## touch/mouse-event-normalisation
-### Touch handler
 
 Abstraction that handles touch/mouse/... uniformly, - and also makes sure that mouseup/release are detected outside of listened element if pressed on elem
 
-TODO: refactor this as a class
 
-      touchHandler = undefined
-      setTouch = undefined
-      do ->
-        touch = undefined
-        setTouch = (t) -> touch = t
-    
-        tapLength = 500 # maximum time for a click, - turns into a hold after that
-        tapDist2 = 10*10 # maximum dragged (squared) distance for a click
-    
-        updateTouch = (touch, e) -> #{{{4
-          x = e.clientX
-          y = e.clientY
-          touch.event = e
-          touch.ddx = x - touch.x || 0
-          touch.ddy = y - touch.y || 0
-          touch.dx = x - touch.x0
-          touch.dy = y - touch.y0
-          touch.maxDist2 = touch.dx * touch.dx + touch.dy * touch.dy
-          touch.time = Date.now() - touch.startTime
-          touch.x = x
-          touch.y = y
-    
-        startTouch = (e, handler, touchObj) -> #{{{4
-          touch = touchObj
-          touch.handler = handler
-          touch.x0 = e.clientX
-          touch.y0 = e.clientY
-          touch.x = e.clientX
-          touch.y = e.clientY
-          log "startTouch", touch.x, touch.y
-          touch.startTime = Date.now()
-          updateTouch touch, e
-          touch.ctx = handler.start(touch)
-          holdHandler = ->
-            if touch && !touch.holding && touch.maxDist2 < tapDist2
-              touch.holding = true
-              touch.handler.hold touch
-          setTimeout holdHandler, tapLength
-    
-        moveTouch = (e) -> #{{{4
-          updateTouch touch, e
-          log "moveTouch", touch.x, touch.y
-          touch.ctx = touch.handler.move touch || touch.ctx
-    
-        stopTouch = (e) -> #{{{4
-          log "stopTouch"
-          touch.handler.end touch
-          touch.handler.click touch if touch.maxDist2 < tapDist2 && touch.time < tapLength
-          touch = undefined
-    
-        condCall = (fn) -> (e) -> #{{{4
-          return undefined if !touch
+      tapLength = 500
+      tapDist2 = 10*10
+      TouchHandler = (elem) ->
+
+#### event
+
+        self = this
+        condCall = (fn) -> (e) ->
+          return undefined if !touch.touching
           e.preventDefault?()
-          fn(e.touches?[0] || e)
+          fn.call self, e.touches?[0] || e
     
-        documentTouch = runOnce -> #{{{4
-
-TODO: bind only once and then autodispatch
-
-          elemAddEventListener document, "mousemove", condCall moveTouch
-          elemAddEventListener document, "touchmove", condCall moveTouch
-          elemAddEventListener document, "mouseup", (e) -> log "mouseup"; (condCall stopTouch)(e)
-          elemAddEventListener document, "touchend", condCall stopTouch
+        elemAddEventListener document, "mousemove", condCall @_move
+        elemAddEventListener document, "touchmove", condCall @_move
+        elemAddEventListener document, "mouseup", condCall @_stop
+        elemAddEventListener document, "touchend", condCall @_stop
+        elemAddEventListener elem, "mousedown", (e) -> e.preventDefault?(); @_start e
+        elemAddEventListener elem, "touchstart", (e) -> e.preventDefault?(); @_start e.touches[0]
     
-        touchHandler = (handler) -> #{{{4
-          elemAddEventListener handler.elem, "mousedown", (e) ->
-            e.preventDefault?()
-            startTouch e, handler, {isMouse: true}
-          elemAddEventListener handler.elem, "touchstart", (e) ->
-            e.preventDefault?()
-            startTouch e.touches[0], handler, {}
+      TouchHandler.prototype._updateTouch = (e) ->
+        prevX = @x; prevY = @y
+        @x = e.clientX; @y = e.clientY
+        @dx = @x - @x0 || 0; @dy = @y - @y0 || 0
+        @ddx = @x - prevX || 0; @ddy = @y - prevY || 0
+        @maxDist2 = Math.max(@maxDist2, @dx*@dx + @dy*@dy)
+        @time = +new Date - @startTime
+        
+      TouchHandler.prototype._start = (e) ->
+        @isMouse = !e.touches
+        e = e.touches[0] if !@isMouse
+        @x0 = @x = e.clientX; @y0 = @y = e.clientY
+        @startTime = +new Date
+        @onstart?()
+        @_updateTouch()
+        @holding = false
+        self = this; setTimeout (-> self._holdTimeout()), tapLength
+        log "_startTouch", @x, @y
     
-          documentTouch()
-          handler.start ||= nop
-          handler.move ||= nop
-          handler.end ||= nop
-          handler.drag ||= nop
-          handler.click ||= nop
-          handler.hold ||= nop
+      TouchHandler.prototype._holdTimeout = ->
+        if @touching && !@holding && @maxDist2 < tapDist2
+          @holding = true
+          @onhold?()
     
-          handler
+      TouchHandler.prototype._move = (e) ->
+        @updateTouch e
+        @onmove?()
+    
+      TouchHandler.prototype._stop= (e) ->
+        @touching = false
+        @updateTouch e
+        @onstop?()
+        @onclick?() if @maxDist2 < tapDist2 && @time < tapLength
     
 
 ## main
