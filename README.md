@@ -121,7 +121,7 @@ define `isNodeJs` and `runTest` in such a way that they will be fully removed by
           syncLog()
      
 
-## log
+## Logging
 
     if !isNodeJs
 
@@ -181,7 +181,7 @@ so there we just send update every `syncDelay` milliseconds.
     
     
 
-## utility
+## Utility
 
     if !isNodeJs
 
@@ -317,7 +317,7 @@ testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
 
     if !isNodeJs
 
-## doc/notes
+### doc/notes
 
 When targeting mobile devices,
 and possibly several 360º views on a page,
@@ -348,20 +348,11 @@ Create the view, - and bind it to a dom element
     
 
 #### Style
-##
-
-        extend domElem.style,
-          display: "inline-block"
-          width: @defaultWidth + "px"
-          height: @defaultHeight + "px"
-
-##
 
         @style =
           root:
             display: "inline-block"
             cursor: "url(res/cursor_rotate.cur),move"
-    
 
 NB: order of the following keys needs to be the exactly same as the children of the dom root node
 
@@ -557,7 +548,7 @@ backgroundSize: "#{@width}px #{@height}px"
     
     
 
-## Loader / caching
+## Loader/caching
 
     if !isNodeJs
 
@@ -626,44 +617,39 @@ backgroundSize: "#{@width}px #{@height}px"
         incrementalLoad testModel, testView, -> log "spinned #{+new Date() - t0}"
     
 
-## User interaction/touch
+## Touch/mouse-event-normalisation
 
-      handleInteraction = (model, view) ->
-        elemAddEventListener document, "mousemove", (e) ->
-          log "mousemove", e.clientX, e.clientY
-          model.frames.current = (e.clientX / 20 |0) % model.frames.normal.urls.length
-          view.update()
-        elemAddEventListener document, "touchmove", (e) -> log "touchmove", e.touches
-    
-      if runTest
-        handleInteraction testModel, testView
-    
+Abstraction that handles single touch/mouse/... uniformly, - and also makes sure that mouseup/release are detected outside of listened element if pressed on elem
 
-## touch/mouse-event-normalisation
-
-Abstraction that handles touch/mouse/... uniformly, - and also makes sure that mouseup/release are detected outside of listened element if pressed on elem
+Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events.
 
 
       tapLength = 500
       tapDist2 = 10*10
-      TouchHandler = (elem) ->
-
-#### event
-
+      TouchHandler = (elem) -> #{{{3
         self = this
         condCall = (fn) -> (e) ->
-          return undefined if !touch.touching
+          return undefined if !self.touching
+          log "here"
           e.preventDefault?()
           fn.call self, e.touches?[0] || e
     
         elemAddEventListener document, "mousemove", condCall @_move
         elemAddEventListener document, "touchmove", condCall @_move
-        elemAddEventListener document, "mouseup", condCall @_stop
-        elemAddEventListener document, "touchend", condCall @_stop
-        elemAddEventListener elem, "mousedown", (e) -> e.preventDefault?(); @_start e
-        elemAddEventListener elem, "touchstart", (e) -> e.preventDefault?(); @_start e.touches[0]
+        elemAddEventListener document, "mouseup", condCall @_end
+        elemAddEventListener document, "touchend", condCall @_end
+        elemAddEventListener elem, "mousedown", (e) -> e.preventDefault?(); self._start e
+        elemAddEventListener elem, "touchstart", (e) -> e.preventDefault?(); self._start e.touches[0]
+        @_reset()
+        return this
     
-      TouchHandler.prototype._updateTouch = (e) ->
+      TouchHandler.prototype._reset = -> #{{{3
+        @touching = false
+        @holding = false
+        @startTime = +new Date
+        @maxDist2 = 0
+    
+      TouchHandler.prototype._update = (e) -> #{{{3
         prevX = @x; prevY = @y
         @x = e.clientX; @y = e.clientY
         @dx = @x - @x0 || 0; @dy = @y - @y0 || 0
@@ -671,37 +657,45 @@ Abstraction that handles touch/mouse/... uniformly, - and also makes sure that m
         @maxDist2 = Math.max(@maxDist2, @dx*@dx + @dy*@dy)
         @time = +new Date - @startTime
         
-      TouchHandler.prototype._start = (e) ->
+      TouchHandler.prototype._start = (e) -> #{{{3
+        @_reset()
+        @touching = true
         @isMouse = !e.touches
         e = e.touches[0] if !@isMouse
         @x0 = @x = e.clientX; @y0 = @y = e.clientY
-        @startTime = +new Date
         @onstart?()
-        @_updateTouch()
-        @holding = false
+        @_update e
         self = this; setTimeout (-> self._holdTimeout()), tapLength
-        log "_startTouch", @x, @y
     
-      TouchHandler.prototype._holdTimeout = ->
+      TouchHandler.prototype._holdTimeout = -> #{{{3
         if @touching && !@holding && @maxDist2 < tapDist2
           @holding = true
           @onhold?()
     
-      TouchHandler.prototype._move = (e) ->
-        @updateTouch e
+      TouchHandler.prototype._move = (e) -> #{{{3
+        @_update e
         @onmove?()
     
-      TouchHandler.prototype._stop= (e) ->
-        @touching = false
-        @updateTouch e
-        @onstop?()
+      TouchHandler.prototype._end = (e) -> #{{{3
+        @_update e
+        @onend?()
         @onclick?() if @maxDist2 < tapDist2 && @time < tapLength
+        @_reset()
+    
+      if runTest #{{{3
+        testTouchHandler = new TouchHandler(testView.elems.root)
+        testTouchHandler.onstart = -> log "start", @x, @y
+        testTouchHandler.onmove = -> log "move", @x, @y
+        testTouchHandler.onclick = -> log "click", @x, @y
+        testTouchHandler.onhold = -> log "hold", @x, @y
+        testTouchHandler.onend = -> log "end"
     
 
 ## main
 
     if !isNodeJs
       window.onetwo360 = (cfg) ->
+        console.log "HJERE"
         undefined
 
 ## Dummy/test-server
@@ -710,7 +704,7 @@ Abstraction that handles touch/mouse/... uniformly, - and also makes sure that m
       express = require "express"
       app = express()
       app.use (req, res, next) ->
-        res.header 'Cache-Control', "max-age=30, public"
+        res.header 'Cache-Control', "max-age=3600, public"
         next()
       app.use express.static __dirname
       startTime = +(new Date())
