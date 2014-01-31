@@ -109,6 +109,70 @@ if runTest && !isNodeJs
       log "tests done"
       syncLog()
  
+#{{{2 Utility
+if !isNodeJs
+  nextTick = (fn) -> setTimeout fn, 0
+  #{{{3 shim
+  Object.keys ?= (obj) -> (key for key, _ of obj)
+  #{{{3 ajax
+  XHR = XMLHttpRequest
+  legacy = false
+  if typeof (new XHR).withCredentials != "boolean"
+    legacy = true
+    XHR = XDomainRequest
+
+  ajax = (url, data, cb) ->
+    xhr = new XHR()
+    xhr.onerror = (err) -> cb? err || true
+    xhr.onload = -> cb? null, xhr.responseText
+    xhr.open (if data then "POST" else "GET"), url, !!cb
+    xhr.send data
+    return xhr.responseText if !cb
+
+  if runTest then nextTick ->
+    ajax "//cors-test.appspot.com/test", undefined, (err, result) -> expect result, '{"status":"ok"}', "async ajax"
+    ajax "//cors-test.appspot.com/test", "foo", (err, result) -> expect result, '{"status":"ok"}', "async ajax post"
+    
+  #{{{3 extend
+  extend = (target, source) ->
+    for key, val of source
+      target[key] = val
+    return target
+
+  if runTest then nextTick ->
+    a = {a: 1, b:2}
+    expect (extend a, {b:3, c:4}), {a:1,b:3,c:4}, "extend"
+    expect a, {a:1,b:3,c:4}, "extend"
+
+  #{{{3 deepCopy
+  deepCopy = (obj) ->
+    if typeof obj == "object"
+      if obj.constructor == Array
+        result = []
+        result.push deepCopy(e) for e in obj
+      else
+        result = {}
+        result[key] = deepCopy(val) for key, val of obj
+      return result
+    else
+      return obj
+
+  if runTest then nextTick ->
+    a = {a: [1,2,3]}
+    b = deepCopy a
+    b.b = "c"
+    b.a[1] = 3
+    expect a, {a: [1,2,3]}, "deepcopy original unmutated"
+    expect b, {a: [1,3,3], b: "c"}, "deepcopy copy with mutations"
+
+
+  #{{{3 add event listener
+  elemAddEventListener = (elem, type, fn) ->
+    if elem.addEventListener
+      elem.addEventListener type, fn, false
+    else
+      elem.attachEvent "on"+type, fn
+
 #{{{2 Logging
 if !isNodeJs
   #
@@ -150,11 +214,10 @@ if !isNodeJs
 
     log = (args...) ->
       logData.push [+(new Date()), args...]
-      syncLog() if logData.length > logsBeforeSync || legacy || runTest
+      nextTick syncLog if logData.length > logsBeforeSync || legacy || runTest
 
-    setTimeout (->
+    nextTick ->
       elemAddEventListener window, "error", (err) ->
-        console.log err
         log "window.onerror ", String(err)
       elemAddEventListener window, "beforeunload", ->
         log "window.beforeunload"
@@ -164,71 +227,7 @@ if !isNodeJs
           undefined
         undefined
       log "starting", logId, window.performance
-    ), 0
 
-
-#{{{2 Utility
-if !isNodeJs
-  #{{{3 shim
-  Object.keys ?= (obj) -> (key for key, _ of obj)
-  #{{{3 ajax
-  XHR = XMLHttpRequest
-  legacy = false
-  if typeof (new XHR).withCredentials != "boolean"
-    legacy = true
-    XHR = XDomainRequest
-
-  ajax = (url, data, cb) ->
-    xhr = new XHR()
-    xhr.onerror = (err) -> cb? err || true
-    xhr.onload = -> cb? null, xhr.responseText
-    xhr.open (if data then "POST" else "GET"), url, !!cb
-    xhr.send data
-    return xhr.responseText if !cb
-
-  if runTest then do ->
-    ajax "//cors-test.appspot.com/test", undefined, (err, result) -> expect result, '{"status":"ok"}', "async ajax"
-    ajax "//cors-test.appspot.com/test", "foo", (err, result) -> expect result, '{"status":"ok"}', "async ajax post"
-    
-  #{{{3 extend
-  extend = (target, source) ->
-    for key, val of source
-      target[key] = val
-    return target
-
-  if runTest then do ->
-    a = {a: 1, b:2}
-    expect (extend a, {b:3, c:4}), {a:1,b:3,c:4}, "extend"
-    expect a, {a:1,b:3,c:4}, "extend"
-
-  #{{{3 deepCopy
-  deepCopy = (obj) ->
-    if typeof obj == "object"
-      if obj.constructor == Array
-        result = []
-        result.push deepCopy(e) for e in obj
-      else
-        result = {}
-        result[key] = deepCopy(val) for key, val of obj
-      return result
-    else
-      return obj
-
-  if runTest then do ->
-    a = {a: [1,2,3]}
-    b = deepCopy a
-    b.b = "c"
-    b.a[1] = 3
-    expect a, {a: [1,2,3]}, "deepcopy original unmutated"
-    expect b, {a: [1,3,3], b: "c"}, "deepcopy copy with mutations"
-
-
-  #{{{3 add event listener
-  elemAddEventListener = (elem, type, fn) ->
-    if elem.addEventListener
-      elem.addEventListener type, fn, false
-    else
-      elem.attachEvent "on"+type, fn
 
 #{{{2 Model
 if !isNodeJs
@@ -397,7 +396,7 @@ if !isNodeJs
     return if @updateReq
     @updateReq = true
     self = this
-    setTimeout (-> self._update(); self.updateReq = false), 0
+    nextTick (-> self._update(); self.updateReq = false)
 
   View.prototype._update = ->
     @_fullscreen()
@@ -528,7 +527,7 @@ if !isNodeJs
           view.update()
 
       if (model.frames.current == lastSetFrame) && (model.frames.current < model.frames.normal.urls.length - 1)
-        setTimeout incrementalUpdate, 0
+        nextTick incrementalUpdate
       else
         log "finished incremental load animation"
 
@@ -559,6 +558,7 @@ if !isNodeJs
       return undefined if !self.touching
       e.preventDefault?()
       fn.call self, e.touches?[0] || e
+      true
 
     elemAddEventListener document, "mousemove", condCall @_move
     elemAddEventListener document, "touchmove", condCall @_move
@@ -592,7 +592,7 @@ if !isNodeJs
     @onstart?()
     @_update e
     self = this; setTimeout (-> self._holdTimeout()), tapLength
-    false
+    true
 
   TouchHandler.prototype._holdTimeout = -> #{{{3
     if @touching && !@holding && @maxDist2 < tapDist2
