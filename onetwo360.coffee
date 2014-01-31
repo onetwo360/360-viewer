@@ -5,13 +5,15 @@
 #{{{2 Current progress
 #
 # - backlog-current
+#   - disable zoom lens when fullscreen
+#   - cache-normal should be multible-callable, but only runs once
+#   - fullscreen use hires-image if available, and recache low-res
 #   - fix android full-screen issues
-#   - IE8 issues: zoom lense not working as we are using css positioned background
 #   - ensure portability IE/8+,Android/2.3+,iOS/6+,Opera/12+,Chrome,Firefox,Safari
 #   - more documentation
 # - in progress
-#   - move technical documentation into relevant parts of source
 #   - major rewrite - getting features from previous milestones to work
+#     - go through old version and make sure all features are ported
 # - 0.1.0 - January/February 2014
 #   - unit testing and continous integration with travis and testling
 #   - better decoupling of model, view and control
@@ -65,23 +67,8 @@
 # 
 #
 #
-#{{{2 Refactor notes
-#
-# - compatibility layer
-# - element with 360-rotation
-#   - current frame
-#   - current-frame overlays (
-#   - zoom lens
-#   - general overlays
-# - event handling
-# - cache handling
-#
-# - model
-#   - current frame
-#   - 
 #{{{1 Literate source code
-#{{{2 Minification
-#
+#{{{2 Minification globals #
 # define `isNodeJs` and `runTest` in such a way that they will be fully removed by `uglifyjs -mc -d isNodeJs=false -d runTest=false `
 #
 if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
@@ -89,29 +76,29 @@ if typeof isNodeJs == "undefined" or typeof runTest == "undefined" then do ->
   root.isNodeJs = (typeof window == "undefined") if typeof isNodeJs == "undefined"
   root.runTest = true if typeof runTest == "undefined"
 
-#{{{2 Testing
-if runTest && !isNodeJs
-  testcount = 6
-  currentTestId = 0
-  console.log "1..#{testcount}"
-  testDone = 0
-  expect = (expected, result, description) ->
-    if JSON.stringify(expected) == JSON.stringify(result)
-      console.log "ok #{++currentTestId} #{description || ""}"
-      log "test ok", currentTestId, description, expected
-    else
-      console.log "not ok #{++currentTestId} + #{description || ""}" +
-        "expected:#{JSON.stringify expected}" +
-        "got:#{JSON.stringify result}"
-      log "test failed", currentTestId, description, expected, result
-    ++testDone
-    if testDone == testcount
-      log "tests done"
-      syncLog()
- 
 #{{{2 Utility
 if !isNodeJs
   nextTick = (fn) -> setTimeout fn, 0
+  #{{{3 Testing
+  if runTest
+    testcount = 6
+    currentTestId = 0
+    console.log "1..#{testcount}"
+    testDone = 0
+    expect = (expected, result, description) ->
+      if JSON.stringify(expected) == JSON.stringify(result)
+        console.log "ok #{++currentTestId} #{description || ""}"
+        log "test ok", currentTestId, description, expected
+      else
+        console.log "not ok #{++currentTestId} + #{description || ""}" +
+          "expected:#{JSON.stringify expected}" +
+          "got:#{JSON.stringify result}"
+        log "test failed", currentTestId, description, expected, result
+      ++testDone
+      if testDone == testcount
+        log "tests done"
+        syncLog()
+   
   #{{{3 shim
   Object.keys ?= (obj) -> (key for key, _ of obj)
   #{{{3 ajax
@@ -173,8 +160,7 @@ if !isNodeJs
     else
       elem.attachEvent "on"+type, fn
 
-#{{{2 Logging
-if !isNodeJs
+#{{{3 Logging
   #
   # We want to send logging and statistics to server, 
   # but not drain battery nor exhaust the network,
@@ -399,7 +385,7 @@ if !isNodeJs
     self = this
     nextTick (-> self._update(); self.updateReq = false)
 
-  View.prototype._update = ->
+  View.prototype._update = -> #{{{3
     @_fullscreen()
     @_root()
     @_overlays()
@@ -408,8 +394,7 @@ if !isNodeJs
     @_applyStyle()
     log "View#_update'd", @top, @left, @width, @height
 
-  #{{{3 private utility functions for updating the view
-  View.prototype._fullscreen= -> #{{{4
+  View.prototype._fullscreen= -> #{{{3
     if @model.fullscreen
       extend @style.root,
         position: "absolute"
@@ -451,13 +436,13 @@ if !isNodeJs
       @top = boundingRect.top
       @left = boundingRect.left
 
-  View.prototype._root = -> #{{{4
+  View.prototype._root = -> #{{{3
     undefined
     #extend @style.root,
       #backgroundImage: "url(#{@model.frames.normal.urls[@model.frames.current]})"
       #backgroundSize: "#{@width}px #{@height}px"
       
-  View.prototype._overlays = -> #{{{4
+  View.prototype._overlays = -> #{{{3
     @style.spinner.display = if @model.loading then "block" else "none"
 
     extend @style.logo,
@@ -472,7 +457,7 @@ if !isNodeJs
       fontSize: @height * .08
       padding: @height * .02
 
-  View.prototype._zoomLens = -> #{{{4
+  View.prototype._zoomLens = -> #{{{3
     if @model.zoom.enabled
       current = @model.frames.current
 
@@ -505,13 +490,13 @@ if !isNodeJs
       extend @style.zoomLens,
         display: "none"
 
-  View.prototype._image = -> #{{{4
+  View.prototype._image = -> #{{{3
     imgSrc = @model.frames.normal.urls[@model.frames.current]
     if imgSrc != undefined && imgSrc != @imgSrc
       @elems.image.src = imgSrc
       @imgSrc = imgSrc
 
-  View.prototype._applyStyle = -> #{{{4
+  View.prototype._applyStyle = -> #{{{3
     for elemId, css of @style
       for key, val of css
         if @styleCache[elemId][key] != val
@@ -539,10 +524,12 @@ if !isNodeJs
       testView.update()
 
 
-  #{{{2 Loader/caching
+#{{{2 Control
+  #{{{3 Loader/caching
 if !isNodeJs
-  #{{{3 Cache frames
+  #{{{4 Cache frames
   cacheFrames = (frameset, cb) ->
+    #TODO: frameset may always be normal, so use model instead of frameset
     frameset.loaded = []
     count = 0
     log "caching frameset", frameset.urls[0]
@@ -556,7 +543,7 @@ if !isNodeJs
         )(i)
       img.src = frameset.urls[i]
 
-  #{{{3 Incremental load
+  #{{{4 Incremental load
   incrementalLoad = (model, view, cb) ->
     loadStart = +(new Date())
     lastTime = undefined
@@ -599,11 +586,11 @@ if !isNodeJs
 
 
   t0 = +new Date()
-  #{{{3 test
+  #{{{4 test
   if runTest
     incrementalLoad testModel, testView, -> log "spinned #{+new Date() - t0}"
 
-#{{{2 Touch/mouse-event-normalisation
+#{{{3 Touch/mouse-event-normalisation
 #
 # Abstraction that handles single touch/mouse/... uniformly, - and also makes sure that mouseup/release are detected outside of listened element if pressed on elem
 #
@@ -611,7 +598,7 @@ if !isNodeJs
 # 
   tapLength = 500
   tapDist2 = 10*10
-  ontouch = (elem, callback) -> #{{{3
+  ontouch = (elem, callback) -> #{{{4
     elemAddEventListener elem, "mousedown", (e) ->
       e.preventDefault?()
       callback e
@@ -619,7 +606,7 @@ if !isNodeJs
       e.preventDefault?()
       callback e
 
-  TouchHandler = (elem) -> #{{{3
+  TouchHandler = (elem) -> #{{{4
     self = this
     condCall = (fn) -> (e) ->
       return undefined if !self.touching
@@ -636,13 +623,13 @@ if !isNodeJs
     @_reset()
     return this
 
-  TouchHandler.prototype._reset = -> #{{{3
+  TouchHandler.prototype._reset = -> #{{{4
     @touching = false
     @holding = false
     @startTime = +new Date
     @maxDist2 = 0
 
-  TouchHandler.prototype._update = (e) -> #{{{3
+  TouchHandler.prototype._update = (e) -> #{{{4
     prevX = @x; prevY = @y
     @x = e.clientX; @y = e.clientY
     @dx = @x - @x0 || 0; @dy = @y - @y0 || 0
@@ -650,7 +637,7 @@ if !isNodeJs
     @maxDist2 = Math.max(@maxDist2, @dx*@dx + @dy*@dy)
     @time = +new Date - @startTime
     
-  TouchHandler.prototype.start = (e) -> #{{{3
+  TouchHandler.prototype.start = (e) -> #{{{4
     @_reset()
     @touching = true
     @isMouse = !e.touches
@@ -661,22 +648,22 @@ if !isNodeJs
     setTimeout (=> @_holdTimeout()), tapLength
     true
 
-  TouchHandler.prototype._holdTimeout = -> #{{{3
+  TouchHandler.prototype._holdTimeout = -> #{{{4
     if @touching && !@holding && @maxDist2 < tapDist2
       @holding = true
       @onhold?()
 
-  TouchHandler.prototype._move = (e) -> #{{{3
+  TouchHandler.prototype._move = (e) -> #{{{4
     @_update e
     @onmove?()
 
-  TouchHandler.prototype._end = (e) -> #{{{3
+  TouchHandler.prototype._end = (e) -> #{{{4
     @_update e
     @onend?()
     @onclick?() if @maxDist2 < tapDist2 && @time < tapLength
     @_reset()
 
-  if runTest #{{{3
+  if runTest #{{{4
     testTouchHandler = new TouchHandler(testView.elems.root)
     testTouchHandler.onstart = -> log "start", @x, @y
     testTouchHandler.onmove = -> log "move", @x, @y
@@ -684,47 +671,56 @@ if !isNodeJs
     testTouchHandler.onhold = -> log "hold", @x, @y
     testTouchHandler.onend = -> log "end"
 
-  #{{{2 main
+  #{{{3 Controller
+  controller = (model, view) ->
+    touchHandler = new TouchHandler(view.elems.root)
+
+    # drag to rotate
+    startFrame = undefined
+    touchHandler.onstart = ->
+      model.showLogo = false
+      startFrame = model.frames.current
+      log "touchstart", @x, model.frames.current
+      view.update()
+    rotate = ->
+      # TODO: use parameter for rotate sensitivity/direction
+      model.frames.current = (startFrame + (@dx / 10)>>>0) % model.frames.normal.urls.length
+      log "touchmove", @x, @dx, model.frames.current
+      view.update()
+    touchHandler.onmove = rotate
+
+    # zoom lens
+    updateZoom = ->
+      model.zoom.x = @x
+      model.zoom.y = @y
+      view.update()
+    startZoom = ->
+      model.zoom.enabled = true
+      updateZoom.call this
+
+      touchHandler.onmove = updateZoom
+      touchHandler.onend = ->
+        model.zoom.enabled = false
+        view.update()
+        touchHandler.onmove = rotate
+        touchHandler.onend = undefined
+
+    touchHandler.onhold = startZoom
+    ontouch view.elems.btnZoom, (e) ->
+      touchHandler.start e
+      startZoom.call touchHandler
+
+    # full screen
+    ontouch view.elems.btnFull, (e) ->
+      model.fullscreen = !model.fullscreen
+      view.update()
+
+  if runTest then do ->
+    controller testModel, testView
+  #{{{3 main
 if !isNodeJs
   window.onetwo360 = (cfg) ->
     undefined
-  if runTest then do ->
-    testStartFrame = undefined
-    testTouchHandler.onstart = ->
-      testModel.showLogo = false
-      testStartFrame = testModel.frames.current
-      log "onstart", @x, testModel.frames.current
-      testView.update()
-    rotate = ->
-      testModel.frames.current = (testStartFrame + (@dx / 10)>>>0) % testModel.frames.normal.urls.length
-      log "onmove", @x, @dx, testModel.frames.current
-      testView.update()
-    testTouchHandler.onmove = rotate
-    startZoom = ->
-      testModel.zoom.enabled = true
-      testModel.zoom.x = @x
-      testModel.zoom.y = @y
-      testView.update()
-      testTouchHandler.onmove = ->
-        testModel.zoom.x = @x
-        testModel.zoom.y = @y
-        testView.update()
-      testTouchHandler.onend = ->
-        testTouchHandler.onmove = rotate
-        testModel.zoom.enabled = false
-        testView.update()
-        testTouchHandler.onend = undefined
-    testTouchHandler.onhold = startZoom
-    ontouch testView.elems.btnZoom, (e) ->
-      testTouchHandler.start e
-      startZoom.call testTouchHandler
-    ontouch testView.elems.btnFull, (e) ->
-      testModel.fullscreen = !testModel.fullscreen
-      testView.update()
-
-
-
-    
 #{{{2 Dummy/test-server
 if isNodeJs
   express = require "express"
