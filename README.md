@@ -476,28 +476,25 @@ TODO: handle nonstatic parents
           extend @style.image,
             left: (@style.root.width - @style.image.width) / 2
             top: (@style.root.height - @style.image.height) / 2
-          
-    
-          @width = @style.image.width
-          @height = @style.image.height
-          @top = @style.image.top
-          @left = @style.image.left
         else
           extend @style.root,
             position: "relative"
             top: 0
             left: 0
-            width: (@width = @defaultWidth)
-            height: (@height = @defaultHeight)
+            width: @defaultWidth
+            height: @defaultHeight
           extend @style.image,
             position: "relative"
             top: 0
             left: 0
-            width: @width
-            height: @height
+            width: @defaultWidth
+            height: @defaultHeight
           boundingRect = @elems.root.getBoundingClientRect()
-          @top = boundingRect.top
-          @left = boundingRect.left
+    
+        @top = @style.image.top
+        @left = @style.image.left
+        @width = @style.image.width
+        @height = @style.image.height
     
       View.prototype._root = -> #{{{3
         undefined
@@ -540,10 +537,10 @@ backgroundSize: "#{@width}px #{@height}px"
     
           left = Math.max(0, Math.min(@width, @model.zoom.x - @left))
           top = Math.max(0, Math.min(@height, @model.zoom.y - @top))
-          console.log @width, @model.zoom.x, @left
           bgX = -left/@width * (w + size) + size/2
           bgY = -top/@height * (h + size) + size/2
           extend @style.zoomLens,
+            position: "absolute"
             display: "block"
             left: left - size/2 + @left
             top: top - size/2 + @top
@@ -686,6 +683,7 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
     
       TouchHandler = (elem) -> #{{{4
         self = this
+        @elem = elem
         condCall = (fn) -> (e) ->
           return undefined if !self.touching
           e.preventDefault?()
@@ -708,8 +706,9 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         @maxDist2 = 0
     
       TouchHandler.prototype._update = (e) -> #{{{4
+        bounds = @elem.getBoundingClientRect()
         prevX = @x; prevY = @y
-        @x = e.clientX; @y = e.clientY
+        @x = e.clientX - bounds.left; @y = e.clientY - bounds.top
         @dx = @x - @x0 || 0; @dy = @y - @y0 || 0
         @ddx = @x - prevX || 0; @ddy = @y - prevY || 0
         @maxDist2 = Math.max(@maxDist2, @dx*@dx + @dy*@dy)
