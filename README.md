@@ -533,6 +533,9 @@ backgroundSize: "#{@width}px #{@height}px"
           img.src = url
           if !img.complete
             img.onload = =>
+
+TODO, - this spawns tons of updates when complete, make sure it only run once, and also recache - should be same as with image-src when optimizing that, so refactor into separate fn
+
               @update()
             url = @model.frames.normal.urls[current]
     
@@ -553,6 +556,9 @@ backgroundSize: "#{@width}px #{@height}px"
             display: "none"
     
       View.prototype._image = -> #{{{3
+
+TODO use highres if available, otherwise normalres, - on hires load recache
+
         imgSrc = @model.frames.normal.urls[@model.frames.current]
         if imgSrc != undefined && imgSrc != @imgSrc
           @elems.image.src = imgSrc
@@ -599,6 +605,7 @@ backgroundSize: "#{@width}px #{@height}px"
       cacheFrames = (frameset, cb) ->
 
 TODO: frameset may always be normal, so use model instead of frameset
+TODO: allow cacheframes to be called several times, but only run once
 
         frameset.loaded = []
         count = 0
