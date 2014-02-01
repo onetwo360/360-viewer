@@ -335,6 +335,7 @@ Create the view, - and bind it to a dom element
 
         @style =
           root:
+            textAlign: "left"
             webkitTapHighlightColor: "rgba(0,0,0,0)"
             webkitUserSelect: "none"
             display: "inline-block"
@@ -452,31 +453,35 @@ borderBottomRightRadius: (zoomSize/5)
         log "View#_update'd", @top, @left, @width, @height
     
       View.prototype._fullscreen= -> #{{{3
+
+TODO: handle nonstatic parents
+
         if @model.fullscreen
           extend @style.root,
             position: "absolute"
             top: window.scrollY
             left: window.scrollX
-            width: (@width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth)
-            height: (@height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight)
+            width: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
+            height: window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
+    
           imWidth = @model.frames.normal.width
           imHeight = @model.frames.normal.height
           imRatio = imWidth/imHeight
-          ratio = @width/@height
-          if @width/@height > imRatio
-            extend @style.image,
-              top: 0
-              left: (ratio - imRatio)/2 * @width
-              width: @width * imRatio/ratio
-              height: @height
-          else
-            extend @style.image,
-              top: 0
-              left: 0
-              width: @width
-              height: @height * ratio/imRatio
-          @top = 0
-          @left = 0
+          ratio = @style.root.width/@style.root.height
+    
+          extend @style.image,
+            position: "absolute"
+            width: @style.root.width * Math.min(1, imRatio/ratio)
+            height: @style.root.height * Math.min(1, ratio/imRatio)
+          extend @style.image,
+            left: (@style.root.width - @style.image.width) / 2
+            top: (@style.root.height - @style.image.height) / 2
+          
+    
+          @width = @style.image.width
+          @height = @style.image.height
+          @top = @style.image.top
+          @left = @style.image.left
         else
           extend @style.root,
             position: "relative"
@@ -485,6 +490,7 @@ borderBottomRightRadius: (zoomSize/5)
             width: (@width = @defaultWidth)
             height: (@height = @defaultHeight)
           extend @style.image,
+            position: "relative"
             top: 0
             left: 0
             width: @width
@@ -534,12 +540,13 @@ backgroundSize: "#{@width}px #{@height}px"
     
           left = Math.max(0, Math.min(@width, @model.zoom.x - @left))
           top = Math.max(0, Math.min(@height, @model.zoom.y - @top))
+          console.log @width, @model.zoom.x, @left
           bgX = -left/@width * (w + size) + size/2
           bgY = -top/@height * (h + size) + size/2
           extend @style.zoomLens,
             display: "block"
-            left: left - size/2
-            top: top - size/2
+            left: left - size/2 + @left
+            top: top - size/2 + @top
             backgroundImage: "url(#{url})"
             backgroundSize: "#{w + size}px #{h + size}px"
             backgroundPosition: "#{bgX}px #{bgY}px"
@@ -673,7 +680,7 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         elemAddEventListener elem, "mousedown", (e) ->
           e.preventDefault?()
           callback e
-        elemAddEventListener elem, "touchstart", (e) -> 
+        elemAddEventListener elem, "touchstart", (e) ->
           e.preventDefault?()
           callback e
     
@@ -710,13 +717,14 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         
       TouchHandler.prototype.start = (e) -> #{{{4
         return if @touching
+        @_update e
         @_reset()
         @touching = true
         @isMouse = !e.touches
         e = e.touches[0] if !@isMouse
-        @x0 = @x = e.clientX; @y0 = @y = e.clientY
-        @onstart?()
+        @x0 = @x; @y0 = @y
         @_update e
+        @onstart?()
         setTimeout (=> @_holdTimeout()), tapLength
         true
     
@@ -730,6 +738,7 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         @onmove?()
     
       TouchHandler.prototype._end = (e) -> #{{{4
+        return if !@touching
         @_update e
         @onend?()
         @onclick?() if @maxDist2 < tapDist2 && @time < tapLength
@@ -790,6 +799,7 @@ zoom lens
             touchHandler.onend = undefined
     
         touchHandler.onclick = ->
+          console.log "onclick"
           startZoom.call touchHandler if @isMouse
         touchHandler.onhold = startZoom
         ontouch view.elems.btnZoom, -> startZoom.call touchHandler
@@ -798,8 +808,11 @@ zoom lens
 full screen
 
         ontouch view.elems.btnFull, (e) ->
+          e.preventDefault()
           model.fullscreen = !model.fullscreen
-          view.update()
+          nextTick ->
+            touchHandler.touching = false
+            view.update()
     
       if runTest then do ->
         controller testModel, testView
