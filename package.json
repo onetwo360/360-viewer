@@ -20,7 +20,6 @@
     "url": "https://github.com/onetwo360/360-viewer.git"
   },
   "dependencies": {
-    "phantom": "~0.5.4"
   },
   "testling": {
     "html": "test.html",
