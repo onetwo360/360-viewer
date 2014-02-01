@@ -12,7 +12,8 @@
   "scripts": {
     "prepublish": "reputil build; ./node_modules/.bin/uglifyjs -m -c warnings=false -d isNodeJs=false,runTest=false onetwo360.js > onetwo360.min.js; git add onetwo360.min.js README.md",
     "start": "",
-    "test": "phantomjs phantom.js & node ./onetwo360.js test"
+    "test": "false",
+    "xtest": "phantomjs phantom.js & node ./onetwo360.js test"
   },
   "license": "MIT",
   "repository": {
