@@ -1,4 +1,4 @@
-callback({
+{
   "width": 1000,
   "zoomWidth": 1000,
   "zoomHeight": 447,
@@ -214,4 +214,4 @@ callback({
     }
   ],
   "baseUrl": "/testdata/"
-})
+}

@@ -226,6 +226,7 @@ so there we just send update every `syncDelay` milliseconds.
         log = (args...) ->
           logData.push [+(new Date()), args...]
           nextTick syncLog if logData.length > logsBeforeSync || legacy || runTest
+          return args
     
         nextTick ->
           elemAddEventListener window, "error", (err) ->
@@ -327,6 +328,7 @@ Create the view, - and bind it to a dom element
       View = (model, domId) ->
         @model = model
         domElem = document.getElementById(domId)
+        throw log "couldn't find dom element for view", domId if !domElem
         @defaultWidth = model.width || domElem.offsetWidth
         @defaultHeight = model.height || domElem.offsetHeight
     
@@ -828,7 +830,30 @@ full screen
 
     if !isNodeJs
       window.onetwo360 = (cfg) ->
-        undefined
+        log "onetwo360 called", cfg
+
+ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
+
+        ajax "/testdata/config.js", undefined, (err, data) ->
+          throw log "error loading embed data", cfg.product_id if err
+          data = JSON.parse data
+          log "got and parsed data", cfg.product_id
+    
+          model = deepCopy defaultModel
+          model.frames.normal.width = data.width
+          model.frames.normal.height = data.width
+          model.frames.zoom.width = data.zoomWidth
+          model.frames.zoom.height = data.zoomHeight
+          model.width = cfg.request_width
+          model.height = cfg.request_height
+          for file in data.files
+            model.frames.normal.urls.push data.baseUrl + file.normal
+            model.frames.zoom.urls.push data.baseUrl + file.zoom
+    
+          view = new View(model, cfg.elem_id)
+          controller model, view
+    
+    
 
 ## Dummy/test-server
 
@@ -865,7 +890,7 @@ full screen
           catch e
             console.log e
     
-      port = 4444
+      port = process.env.PORT || 4444
       app.listen port
       console.log "devserver running on port #{port}"
     
