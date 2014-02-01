@@ -323,9 +323,9 @@ if !isNodeJs
         color: "#333"
         transition: "opacity 0.5s"
       btnFull:
-        left: "90%"
+        position: "absolute"
       btnZoom:
-        left: "5%"
+        position: "absolute"
       spinner:
         position: "absolute"
         top: "49%"
@@ -337,7 +337,6 @@ if !isNodeJs
       opacity: "0.7"
       textShadow: "0px 0px 5px white"
       backgroundColor: if !legacy then "rgba(255,255,255,0)" else undefined
-      top: "80%"
       fontSize: @defaultHeight * .08
       padding: @defaultHeight * .02
     extend @style.btnFull, buttonStyle
@@ -451,12 +450,14 @@ if !isNodeJs
       left: @width*.5 - @height*.3
       fontSize: @height*.2
       opacity: if @model.showLogo then "1" else "0"
-    extend @style.btnFull,
-      fontSize: @height * .08
+    btnStyle =
+      top: @top + @height - @width * .1
+      fontSize: @width * .06
       padding: @height * .02
-    extend @style.btnZoom,
-      fontSize: @height * .08
-      padding: @height * .02
+    extend @style.btnFull, btnStyle
+    @style.btnFull.left = @left + @width * .90
+    extend @style.btnZoom, btnStyle
+    @style.btnZoom.left = @left + @width * .02
 
   View.prototype._zoomLens = -> #{{{3
     if @model.zoom.enabled
