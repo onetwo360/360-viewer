@@ -529,7 +529,6 @@ backgroundSize: "#{@width}px #{@height}px"
           img.src = url
           if !img.complete
             img.onload = =>
-              console.log "zoom loaded", img.width, img.height
               @update()
             url = @model.frames.normal.urls[current]
     
@@ -537,7 +536,6 @@ backgroundSize: "#{@width}px #{@height}px"
           top = Math.max(0, Math.min(@height, @model.zoom.y - @top))
           bgX = -left/@width * (w + size) + size/2
           bgY = -top/@height * (h + size) + size/2
-          console.log left/@width, top/@height, bgX, bgY
           extend @style.zoomLens,
             display: "block"
             left: left - size/2
@@ -711,6 +709,7 @@ Assign `onstart`, `onhold`, `onclick`, `onmove` and `onend` to handle the events
         @time = +new Date - @startTime
         
       TouchHandler.prototype.start = (e) -> #{{{4
+        return if @touching
         @_reset()
         @touching = true
         @isMouse = !e.touches
@@ -776,8 +775,12 @@ zoom lens
           model.zoom.y = @y
           view.update()
         startZoom = ->
-          model.zoom.enabled = true
-          updateZoom.call this
+          nextTick =>
+            touchHandler.start
+              clientX: @x
+              clientY: @y
+            model.zoom.enabled = true
+            updateZoom.call this
     
           touchHandler.onmove = updateZoom
           touchHandler.onend = ->
@@ -786,10 +789,10 @@ zoom lens
             touchHandler.onmove = rotate
             touchHandler.onend = undefined
     
+        touchHandler.onclick = ->
+          startZoom.call touchHandler if @isMouse
         touchHandler.onhold = startZoom
-        ontouch view.elems.btnZoom, (e) ->
-          touchHandler.start e
-          startZoom.call touchHandler
+        ontouch view.elems.btnZoom, -> startZoom.call touchHandler
     
 
 full screen
