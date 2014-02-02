@@ -401,6 +401,7 @@ if !isNodeJs
     if @model.fullscreen
       extend @style.root,
         position: "absolute"
+        zIndex: "10000"
         top: window.scrollY
         left: window.scrollX
         width: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
@@ -421,6 +422,7 @@ if !isNodeJs
     else
       extend @style.root,
         position: "relative"
+        zIndex: "0"
         top: 0
         left: 0
         width: @defaultWidth
@@ -721,9 +723,7 @@ if !isNodeJs
         touchHandler.onmove = rotate
         touchHandler.onend = undefined
 
-    touchHandler.onclick = ->
-      console.log "onclick"
-      startZoom.call touchHandler if @isMouse
+    touchHandler.onclick = -> startZoom.call touchHandler if @isMouse
     touchHandler.onhold = startZoom
     ontouch view.elems.btnZoom, -> startZoom.call touchHandler
 
@@ -749,7 +749,7 @@ if !isNodeJs
 
       model = deepCopy defaultModel
       model.frames.normal.width = data.width
-      model.frames.normal.height = data.width
+      model.frames.normal.height = data.height
       model.frames.zoom.width = data.zoomWidth
       model.frames.zoom.height = data.zoomHeight
       model.width = cfg.request_width
