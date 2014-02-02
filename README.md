@@ -611,13 +611,13 @@ TODO: allow cacheframes to be called several times, but only run once
 
         frameset.loaded = []
         count = 0
-        log "caching frameset", frameset.urls[0]
+        log "caching frameset", frameset.urls
         for i in [0..frameset.urls.length - 1]
           img = new Image()
           img.onload = ((i) -> ->
               frameset.loaded[i] = +(new Date())
               if ++count == frameset.urls.length
-                log "done caching frameset", frameset.urls[0]
+                log "done caching frameset", frameset.urls
                 cb?()
             )(i)
           img.src = frameset.urls[i]
@@ -654,6 +654,7 @@ TODO: allow cacheframes to be called several times, but only run once
             nextTick incrementalUpdate
           else
             log "finished incremental load animation"
+            cb?()
     
         if model.spinOnLoadFPS
           cacheFrames model.frames.normal, -> model.loading = false; view.update()
@@ -663,7 +664,7 @@ TODO: allow cacheframes to be called several times, but only run once
           cacheFrames model.frames.normal ->
             model.loading = false
             view.update()
-            cb()
+            cb?()
     
     
       t0 = +new Date()
@@ -850,7 +851,10 @@ ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
             model.frames.normal.urls.push data.baseUrl + file.normal
             model.frames.zoom.urls.push data.baseUrl + file.zoom
     
+          model.spinOnLoadFPS = 0 if cfg.dontSpinOnLoad
           view = new View(model, cfg.elem_id)
+    
+          incrementalLoad model, view
           controller model, view
     
     
