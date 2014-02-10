@@ -1,0 +1,16 @@
+{
+  "name": "onetwo360-viewer",
+  "version": "0.0.8",
+  "main": "onetwo360.min.js",
+  "description": "Widget for showing OneTwo360 images/animations",
+  "license": "MIT",
+  "keywords": [],
+  "authors": [
+    "Rasmus Erik Voel Jensen (solsort.com)",
+    "hammerti.me"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onetwo360/360-viewer.git"
+  }
+}

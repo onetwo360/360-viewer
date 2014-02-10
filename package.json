@@ -1,5 +1,5 @@
 {
-  "name": "360-viewer",
+  "name": "onetwo360-viewer",
   "version": "0.0.8",
   "devDependencies": {
     "express": "~3.4.8",
@@ -8,7 +8,7 @@
   },
   "description": "Widget for showing OneTwo360 images/animations",
   "keywords": [],
-  "author": "Rasmus Erik Voel Jensen (solsort.com)",
+  "author": ["Rasmus Erik Voel Jensen (solsort.com)", "hammerti.me"],
   "scripts": {
     "prepublish": "reputil build; ./node_modules/.bin/uglifyjs -m -c warnings=false -d isNodeJs=false,runTest=false onetwo360.js > onetwo360.min.js; git add onetwo360.min.js README.md",
     "start": "",

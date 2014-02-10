@@ -4,25 +4,22 @@
 #
 #{{{2 Current progress
 #
-# - backlog-current
-#   - disable zoom lens when fullscreen
+# - 0.1.1 - February 2014
+#   - test against onetwo360-server
+#   - ensure portability IE/8+,Android/2.3+,iOS/6+,Opera/12+,Chrome,Firefox,Safari
 #   - cache-normal should be multible-callable, but only runs once
 #   - fullscreen use hires-image if available, and recache low-res
-#   - fix android full-screen issues
-#   - ensure portability IE/8+,Android/2.3+,iOS/6+,Opera/12+,Chrome,Firefox,Safari
 #   - more documentation
-# - in progress
-#   - major rewrite - getting features from previous milestones to work
-#     - go through old version and make sure all features are ported
+#
+#{{{2 Changelog
+#
 # - 0.1.0 - January/February 2014
+#   - bower-publish
 #   - unit testing and continous integration with travis and testling
 #   - better decoupling of model, view and control
 #   - support for sending statistics/logging to server
 #   - automatic removal of tests and development code from production version (via uglify-js)
 #   - optimise "Animate on load" to run during load, - increasing perceived load performance significantly
-#
-#{{{2 Changelog
-#
 # - 0.0.0-MILESTONE-2 - December 2013 / January 2014
 #   - log util, sending log to server
 #   - locally cached development data for easier development / automated testing
@@ -54,8 +51,8 @@
 # 
 # - next
 #   - icons not requiring full font-awesome
-#   - bower-publish
 # - later
+#   - maybe disable zoom lens when fullscreen
 #   - multitouch - see if we can enable zoom/scroll by no-preventDefault when multifinger (no, difficult, look into this later)
 #   - customer logo(postponed due to no customer logo links in sample data from the api)
 #   - labels/markers/interaction points (postponed due to no markers/interaction points in the sample data from the api)
@@ -64,7 +61,6 @@
 #   - test/make sure it works also wit small data sets of 1 picture
 #   - icons / documentation - zoom-lense(desktop), fullscreen, close(fullscreen)
 #   - thumbnails when few pictures (maybe instead of drag)
-# 
 #
 #
 #{{{1 Literate source code
