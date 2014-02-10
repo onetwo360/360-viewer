@@ -1,4 +1,4 @@
-# onetwo360-viewer 0.0.8
+# onetwo360-viewer 0.1.0
 
 Widget for showing OneTwo360 images/animations
 [![ci](https://secure.travis-ci.org/onetwo360/360-viewer.png)](http://travis-ci.org/onetwo360/360-viewer)
