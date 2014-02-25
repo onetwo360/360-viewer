@@ -213,5 +213,5 @@
       "zoom": "52.jpg"
     }
   ],
-  "baseUrl": "/testdata/"
+  "baseUrl": "testdata/"
 }

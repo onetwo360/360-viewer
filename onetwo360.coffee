@@ -255,8 +255,8 @@ if !isNodeJs
       testModel.height = testModel.frames.normal.height = 223
       for i in [1..52] by 1
         #testModel.frames.normal.urls.push "/testdata/#{i}.jpg"
-        testModel.frames.normal.urls.push "/testdata/#{i}.normal.jpg"
-        testModel.frames.zoom.urls.push "/testdata/#{i}.jpg"
+        testModel.frames.normal.urls.push "testdata/#{i}.normal.jpg"
+        testModel.frames.zoom.urls.push "testdata/#{i}.jpg"
 
   #{{{2 View
 if !isNodeJs
@@ -738,7 +738,7 @@ if !isNodeJs
   window.onetwo360 = (cfg) ->
     log "onetwo360 called", cfg
     # ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
-    ajax "/testdata/config.js", undefined, (err, data) ->
+    ajax "testdata/config.js", undefined, (err, data) ->
       throw log "error loading embed data", cfg.product_id if err
       data = JSON.parse data
       log "got and parsed data", cfg.product_id
