@@ -736,9 +736,10 @@ if !isNodeJs
   #{{{3 main
 if !isNodeJs
   window.onetwo360 = (cfg) ->
+    return setTimeout (-> window.onetwo360 cfg), 100 if document.readyState != "complete"
     log "onetwo360 called", cfg
-    # ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
-    ajax "testdata/config.js", undefined, (err, data) ->
+    ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
+      #ajax "testdata/config.js", undefined, (err, data) ->
       throw log "error loading embed data", cfg.product_id if err
       data = JSON.parse data
       log "got and parsed data", cfg.product_id

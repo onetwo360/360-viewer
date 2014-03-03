@@ -1,7 +1,10 @@
 # onetwo360-viewer 0.1.0
 
-Widget for showing OneTwo360 images/animations![ci](https://secure.travis-ci.org/onetwo360/360-viewer.png)
-![browser support](https://ci.testling.com/onetwo360/360-viewer.png)
+Widget for showing OneTwo360 images/animations
+[![ci](https://secure.travis-ci.org/onetwo360/360-viewer.png)](http://travis-ci.org/onetwo360/360-viewer)
+
+[![browser support](https://ci.testling.com/onetwo360/360-viewer.png)](http://ci.testling.com/onetwo360/360-viewer)
+
 
 Viewer client for http://onetwo360.com/
 
@@ -824,11 +827,12 @@ full screen
 
     if !isNodeJs
       window.onetwo360 = (cfg) ->
+        return setTimeout (-> window.onetwo360 cfg), 100 if document.readyState != "complete"
         log "onetwo360 called", cfg
+        ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
 
-ajax "//embed.onetwo360.com/" + cfg.product_id, undefined, (err, data) ->
+ajax "testdata/config.js", undefined, (err, data) ->
 
-        ajax "testdata/config.js", undefined, (err, data) ->
           throw log "error loading embed data", cfg.product_id if err
           data = JSON.parse data
           log "got and parsed data", cfg.product_id

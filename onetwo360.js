@@ -831,8 +831,13 @@
 
   if (!isNodeJs) {
     window.onetwo360 = function(cfg) {
+      if (document.readyState !== "complete") {
+        return setTimeout((function() {
+          return window.onetwo360(cfg);
+        }), 100);
+      }
       log("onetwo360 called", cfg);
-      return ajax("testdata/config.js", void 0, function(err, data) {
+      return ajax("//embed.onetwo360.com/" + cfg.product_id, void 0, function(err, data) {
         var file, model, view, _i, _len, _ref;
         if (err) {
           throw log("error loading embed data", cfg.product_id);
