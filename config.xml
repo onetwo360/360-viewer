@@ -11,19 +11,46 @@
     <author email="app@solsort.com" href="http://solsort.com">OneTwo360, and solsort.com</author>
     <icon src="res/360_logo.png" />
     <content src="index.html" />
+    <!--splash src="www/assets/splash.png" /-->
 
     <plugin name="cordova-plugin-whitelist" spec="1" />
     <access origin="*" />
 
-    <preference name="permissions" value="none" /> 
     <preference name="orientation" value="default" />
-    <preference name="target-device" value="universal" />
-    <preference name="fullscreen" value="false" />
-    <preference name="prerendered-icon" value="false" />
-    <preference name="ios-statusbarstyle" value="black-opaque" />
-    <preference name="detect-data-types" value="false" />
-    <preference name="exit-on-suspend" value="false" />
+    <preference name="permissions" value="none" /> 
     <preference name="auto-hide-splash-screen" value="true" />
+    <preference name="fullscreen" value="false" />
+    <preference name="DisallowOverscroll" value="false" />
+
+    <!--feature name="http://api.phonegap.com/1.0/network" />
+    <feature name="http://api.phonegap.com/1.0/camera" />
+    <feature name="http://api.phonegap.com/1.0/notification" />
+    <feature name="http://api.phonegap.com/1.0/geolocation" />
+    <feature name="http://api.phonegap.com/1.0/media" />
+    <feature name="http://api.phonegap.com/1.0/contacts" />
+    <feature name="http://api.phonegap.com/1.0/file" />
+    <feature name="http://api.phonegap.com/1.0/battery" />
+    <feature name="http://api.phonegap.com/1.0/device" /-->
+
+ 
+    <engine name="android" />
+    <platform name="android">
+       <preference name="android-installLocation" value="internalOnly" /> 
+       <!--preference name="android-windowSoftInputMode" value="stateVisible|adjustResize" /--> 
+    </platform>
+
+    <!--engine name="ios" />
+    <platform name="ios">
+        <preference name="target-device" value="universal" />
+        <preference name="prerendered-icon" value="false" />
+        <preference name="ios-statusbarstyle" value="black-opaque" />
+        <preference name="detect-data-types" value="false" />
+        <preference name="exit-on-suspend" value="false" />
+        <preference name="deployment-target" value="7.0" />
+    </platform-->
+
+    <engine name="browser" />
+    <engine name="ubuntu" />
 
     <!--
     <allow-intent href="http://*/*" />
@@ -32,16 +59,11 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
-
-    <platform name="android">
-        <allow-intent href="market:*" />
-    </platform>
-    <platform name="ios">
+    ios:
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
-    </platform>
+    android:
+        <allow-intent href="market:*" />
 
-    <engine name="android" spec="~4.1.1" />
-    <engine name="browser" spec="~4.0.0" />
     -->
 </widget>
