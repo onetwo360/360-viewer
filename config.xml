@@ -2,6 +2,7 @@
 <widget id="onetwo360.viewer" version="0.0.1" 
   xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>360 widget</name>
+    <date>2014-02</date>
     <shortdescription>HTML5-widget for displaying 360º-pictures</shortdescription>
     <description>
       Simple demo of widget for displaying 360º-images. 
